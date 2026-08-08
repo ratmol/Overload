@@ -19,7 +19,7 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 1 — training logger.** Engine core is built and green (108 tests).
+**Stage 1 — training logger.** Engine core is built and green (148 tests).
 `apps/web` is empty. Next work is Dexie schema, then the log-a-set screen.
 
 Stage 0 (14 days of intake + daily weights via Cronometer or MacroFactor,
@@ -105,8 +105,17 @@ There is a test asserting the constant stays below 3500 so nobody "fixes" it.
 
 **The trend understates the rate of gain for the first ~8 weeks.** This is a
 known, documented EWMA warm-up bias, not a bug. It is guarded by `warmingUp`
-plus a confidence cap, not corrected. Do not "fix" it without reading
-ALGORITHM.md §1.1 — the naive fix makes it worse.
+(56 days = 8 half-lives), a confidence cap, AND a hard block in `adjustTarget`.
+Do not "fix" it without reading ALGORITHM.md §1.1 — the naive fix makes it worse.
+
+**Documentation is not a guardrail.** Three documents once described a
+warming-up block that did not exist in `adjust.ts`, and there was no test for
+it. If you write down that the engine refuses to do something, write the test in
+the same commit.
+
+**The engine must be able to say "this is not a calorie problem."** A flat trend
+under a verified surplus escalates to `needs-review` and points at the blood
+panel, rather than adding 100 kcal forever.
 
 **Outlier thresholds are calibrated, not guessed.** Three constants in
 `DEFAULT_TREND_OPTIONS`. Do not touch them without re-running the 25-seed tests

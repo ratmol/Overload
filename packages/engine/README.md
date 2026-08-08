@@ -7,7 +7,7 @@ storage layer, no framework. Everything here is a function from data to a
 decision plus a human-readable reason for it.
 
 ```bash
-npm test        # 108 tests
+npm test        # 148 tests
 ```
 
 ---
@@ -41,12 +41,18 @@ accrual:
                  =  740 kcal/week ≈ 105 kcal/day surplus
 ```
 
-A 3500 constant prescribes roughly **200 kcal/day more than needed**. Over six
-months that is several pounds of avoidable fat, produced by a tool the user
-trusted.
+A 3500 constant misattributes roughly **95 kcal/day** at this rate. Over six
+months that is real avoidable fat, produced by a tool the user trusted.
 
-There is a test asserting the gain constant stays below 3500, purely so nobody
-later "corrects" it back to the textbook number.
+The number in that sentence used to say 200, which was wrong — 200 is the
+*total* a 3500 constant attributes, and the honest figure is 105, so the
+difference is 95. It is documented here rather than quietly corrected because
+overstating your own headline finding by 2x is the kind of thing a reader should
+be able to see you catching.
+
+The constants are pinned to exact values by test. An earlier version asserted
+only `gain < 3500`, which would have passed on a value of 1 — it pinned nothing
+while three documents claimed it pinned the number.
 
 ### 2. The estimator is biased early, and says so
 
@@ -56,16 +62,22 @@ at a true 0.4 lb/week gain:
 
 | History | Recovered rate | Error |
 |---|---|---|
-| 42 days | 0.24-0.37 lb/wk | up to 40% low |
-| 60 days | 0.39 lb/wk | ~3% low |
-| 90 days | 0.38-0.40 lb/wk | <5% |
+| 28 days | 0.275 lb/wk | **31% low** |
+| 42 days | 0.374 lb/wk | 6% low |
+| 56 days | 0.390 lb/wk | 3% low |
+| 63 days+ | 0.410 lb/wk | ~2% high |
 
 An understated gain rate reads as "not gaining fast enough", and the naive
 response is to add calories — precisely backwards during month one.
 
-The engine does not correct this. It detects it (`warmingUp`), caps confidence
-at `low`, and lets the guardrails prevent action. Saying *I do not know yet* is
-a feature.
+The engine does not correct this. It detects it (`warmingUp`, at eight
+half-lives — a four-half-life gate released at the point of *maximum* bias),
+caps confidence at `low`, and hard-blocks the adjustment. Saying *I do not know
+yet* is a feature.
+
+A naive 3500 constant costs ~95 kcal/day at this rate, not the ~200 an earlier
+draft of these docs claimed. The error was mistaking the total for the
+difference; the honest number is still worth fixing.
 
 ### 3. Outlier detection was calibrated, not guessed
 
@@ -94,23 +106,39 @@ The engine refuses to act far more often than it acts. Every guardrail has a
 test written before the feature.
 
 ```
-No adjustment while the trend filter is warming up (< 28 days history)
-No adjustment with a window shorter than 14 days
-No adjustment with fewer than 10 logged days in the window
-Maximum ±100 kcal per adjustment
-Maximum one adjustment per 7 days
+No adjustment while the trend filter is warming up (< 56 days history)
+No adjustment at low confidence, for any reason confidence is low
+No adjustment with fewer than 14 logged days, or below 70% coverage
+No adjustment while the observed rate is inside the target BAND
+Maximum +/-100 kcal per adjustment, and only 60% of the computed correction
+Maximum one adjustment per 14 days
 No adjustment during, or within 3 days after, a deload week
+No adjustment below a 1600 kcal floor, or below estimated expenditure on a gain
 No adjustment if the user has locked calories
-Changes below 25 kcal are treated as zero
+Changes below 25 kcal are zero, not rounded up to 25
+Escalate to needs-review instead of adjusting when good data still will not move
 Every adjustment stores a human-readable reason string
 ```
+
+Three of those were missing from an earlier version — described in three
+documents, absent from the code, and untested. The engine was acting on data its
+own estimator had labelled untrustworthy.
 
 **That last one is the product.** If a plain-English explanation cannot be
 generated, the change does not happen:
 
-> Trend shows +0.11 lb/week against a target of +0.40 lb/week. Moving calories
-> up 100 to 2650. Estimated expenditure 2450 kcal (2350-2550), medium
-> confidence. Using 2500 kcal/lb for a gain phase, not 3500.
+> Trend shows +0.11 lb/week, outside your target band of +0.25 to +0.50
+> lb/week. Moving calories up 50 to 2600. Estimated expenditure 2450 kcal
+> (2300-2600), medium confidence. Using 2500 kcal/lb for a gain phase, not 3500.
+> Applying 60% of the computed correction, because a change takes about two
+> weeks to show up.
+
+And when calories are no longer a plausible explanation, it stops instead:
+
+> Your intake has moved up 350 kcal across several cycles and the weight trend
+> still has not responded. At this point the most likely explanations are no
+> longer calories. Your plan lists a baseline blood panel as the highest-priority
+> thing to rule out. Worth raising with a doctor before adding more food.
 
 ---
 
@@ -140,7 +168,7 @@ returns `null`, so the UI shows `—` rather than a number that reads as a stall
 ```ts
 import {
   computeTrend, trendSlopePerDay, isWarmingUp,   // trend.ts
-  estimateTdee, estimateTaggedExpenditure,        // tdee.ts
+  estimateTdee, summariseTaggedIntake,            // tdee.ts
   adjustTarget,                                   // adjust.ts
   systemLoad, nextPrescription, isStalled,        // progression.ts
   detectDeload,                                   // deload.ts

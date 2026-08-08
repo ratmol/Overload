@@ -87,15 +87,25 @@ re-running the 25-seed tests in `trend.test.ts`.
 
 ---
 
-## 7. The warm-up bias is disclosed, not corrected
+## 7. The warm-up bias is disclosed, not corrected — at EIGHT half-lives
 
 The EWMA slope is biased toward zero for the first ~8 weeks (see ALGORITHM.md
 §1.1). Bias-correcting a hand-seeded EWMA introduces its own artefacts, and the
 correction would be least trustworthy exactly when it matters most.
 
-**Chosen:** expose `warmingUp`, cap confidence at `low`, and let the existing
-guardrails prevent action. The engine says "I do not know yet" rather than
-guessing.
+**Chosen:** expose `warmingUp`, cap confidence at `low`, and hard-block in
+`adjustTarget`. The engine says "I do not know yet" rather than guessing.
+
+**Corrected after review.** The gate was originally four half-lives (28 days),
+chosen because four is the conventional settling point. Measurement showed the
+bias is 31% at exactly 28 days and only falls under 5% around 56 — so the gate
+released at the point of maximum bias. Now eight half-lives, and pinned by a
+test that measures the bias curve so the doc table cannot drift from the code.
+
+**Also corrected:** "let the existing guardrails prevent action" was false. No
+such guardrail existed in `adjust.ts`, in any version, while this document, the
+package README and CLAUDE.md all asserted it did. There was no test for it,
+which is why it survived. Documentation is not a guardrail.
 
 This matters more than it sounds: an understated gain rate reads as "not gaining
 fast enough", and the naive response is to add calories. During month one that is
@@ -103,17 +113,28 @@ precisely backwards.
 
 ---
 
-## 8. energyDensityPerLb = 2500 on a gain, not the computed 1850
+## 8. energyDensityPerLb = 2500 on a gain — right value, wrong reasoning
 
-A 60/40 lean-to-fat accrual ratio computes to ~1850 kcal/lb. We use 2500.
+The value stands. The justification originally recorded here was wrong, with the
+sign inverted twice, and is preserved as a correction rather than deleted.
 
-Overestimating the density makes the engine under-correct — it attributes a
-weight change to fewer calories than really caused it, so it moves the target
-less. On a lean gain, under-correcting means drifting slightly off target rather
-than oscillating around it, which is the safer failure mode.
+**What it said:** overestimating density makes the engine under-correct, because
+it attributes a weight change to fewer calories than really caused it.
 
-1850 is the physiologically honest number; 2500 is a conservative engineering
-choice. The gap is a decision, not an error, and it is user-overridable.
+**Why that is backwards:** overestimating density attributes a weight change to
+*more* calories. And in `adjust.ts` the delta is `rateError x density / 7`, so a
+larger density produces a *larger* correction — 2500 over-corrects relative to
+1850 by 35%. The original reasoning was about the TDEE path, where the
+sensitivity runs the other way, applied to the adjustment path.
+
+**What actually justifies 2500:** the 1850 figure came from optimistic inputs —
+60/40 partitioning (a ceiling for a trained lifter, not a central estimate) and
+750 kcal/lb for lean tissue (its *stored* energy, ignoring the metabolic cost of
+depositing it). With 45/55 partitioning and ~1150 kcal/lb deposition cost, the
+arithmetic gives 2497. 2500 is what honest inputs produce.
+
+The conservatism that used to hide inside this constant now lives where it can
+be seen, as an explicit `damping` factor in `adjust.ts`.
 
 **Revisit when** there are 12+ weeks of real data plus a second DEXA scan, at
 which point the actual personal accrual ratio is measurable and the constant can
@@ -144,6 +165,61 @@ from rows alone and never flag a real gap.
 Package scope `@overload/engine`. Ties to progressive overload and to system
 load, which is the headline feature. Picked before the first commit, on the
 grounds that it is cheap now and annoying later.
+
+---
+
+## 11. Adjustment is gated on a rate BAND, damped, and floored
+
+Superseded the original scalar-target design. Three changes, one cause: this is
+a controller with a 2-3 week lag, and the first version adjusted weekly into
+that lag with a deadband of 0.035 lb/week.
+
+- **Band, not point.** The plan says 0.25-0.5 lb/week. Inside it, do nothing.
+- **Damping at 0.6.** Only part of the computed correction is applied, so the
+  controller stops stacking corrections for changes it cannot see yet.
+- **14 days between adjustments**, up from 7. Two EWMA half-lives.
+- **A 1600 kcal floor**, plus a rule that a gain-phase target may not drop below
+  the low end of its own estimated expenditure.
+
+The concrete failure this prevents: starting creatine and raising carbs adds 2-4
+lb of water and glycogen over a fortnight, reads as ~1 lb/week of gain, and
+invites repeated cuts for something that was never tissue. At 100 kcal/week with
+no floor, a 2550 target reaches RMR in under three months.
+
+**Reversible?** Yes, all constants. But `targetRatePerWeekLb` became
+`targetRateBandLbPerWeek`, which is a schema change.
+
+---
+
+## 12. estimateTaggedExpenditure was deleted, not fixed
+
+It reported shift-day and off-day *expenditure* derived from the intake
+difference. The output was algebraically identical to its input, never touched
+the weight trend, and therefore contained no evidence about expenditure at all.
+Clamping to [0, 600] also censored the disconfirming direction, so a user eating
+*less* on shift days was told there was no difference.
+
+Replaced by `summariseTaggedIntake`, which reports the signed difference, a
+Welch interval, and whether it clears its own noise floor. The question it used
+to pretend to answer needs step count as a direct input.
+
+**Reversible?** The name and shape changed, so callers break loudly. That is the
+intent — a silent signature-compatible fix would have left the same wrong idea
+in place.
+
+---
+
+## 13. The engine can escalate beyond calories
+
+`needs-review` blocks adjustment and points at a blood panel when good data has
+failed to move for several cycles and cumulative drift exceeds 300 kcal.
+
+Before this, the only vocabulary for a flat trend was "add 100 more", forever. A
+verified surplus with no response is close to the textbook presentation of the
+causes the training plan lists as highest priority to rule out. An engine that
+absorbs that into weekly increments is actively delaying a diagnosis.
+
+**Reversible?** Yes.
 
 ---
 

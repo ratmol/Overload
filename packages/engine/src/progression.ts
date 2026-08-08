@@ -60,6 +60,20 @@ export interface ProgressionResult extends Prescription {
 export interface SessionPerformance {
   date: IsoDate;
   sets: { addedWeightLb: number; reps: number; rir: number }[];
+  /**
+   * Deload sessions run at ~87.5% with belt weight stripped, so they look
+   * identical to a regression. They must be excluded from stall detection or
+   * the first session back reads as "no gain", flags a stall, and can trigger
+   * a second deload immediately after the first.
+   */
+  isDeload?: boolean;
+}
+
+/** Non-deload sessions only, oldest first. */
+function accumulationSessions(history: readonly SessionPerformance[]): SessionPerformance[] {
+  return history
+    .filter((s) => !s.isDeload && s.sets.length > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /**
@@ -78,12 +92,13 @@ export function nextPrescription(
   exercise: Exercise,
   history: readonly SessionPerformance[],
 ): ProgressionResult {
-  const sessions = [...history].sort((a, b) => a.date.localeCompare(b.date));
+  const sessions = accumulationSessions(history);
   const last = sessions[sessions.length - 1];
   const prev = sessions[sessions.length - 2];
+  const older = sessions[sessions.length - 3];
   const [min, max] = exercise.defaultRepRange;
 
-  if (!last || last.sets.length === 0) {
+  if (!last) {
     return {
       load: exercise.startingLoadLb ?? 0,
       targetReps: exercise.defaultRepRange,
@@ -94,7 +109,30 @@ export function nextPrescription(
   }
 
   const lastLoad = Math.max(...last.sets.map((s) => s.addedWeightLb));
-  const allHitTop = last.sets.every((s) => s.reps >= max);
+
+  // Entry standard: strict bodyweight reps before any load is added. The one
+  // hard safety rule in the plan's loading section, and it also applies coming
+  // out of a deload where the belt has been stripped back to bodyweight.
+  if (
+    exercise.entryStandardReps !== undefined &&
+    lastLoad <= 0 &&
+    !last.sets.every((s) => s.reps >= exercise.entryStandardReps!)
+  ) {
+    const best = Math.max(...last.sets.map((s) => s.reps));
+    return {
+      load: 0,
+      targetReps: [exercise.entryStandardReps, exercise.entryStandardReps],
+      sets: exercise.defaultSets,
+      outcome: 'add-reps',
+      reason: `Own ${exercise.entryStandardReps} strict bodyweight reps on every set before adding load. Best set last time was ${best}.`,
+    };
+  }
+
+  // `every` is vacuously true on a single logged set, so a session cut short
+  // after one good set used to earn a load increase. Require the full
+  // prescribed set count before advancing.
+  const completedPrescribedSets = last.sets.length >= exercise.defaultSets;
+  const allHitTop = completedPrescribedSets && last.sets.every((s) => s.reps >= max);
 
   if (allHitTop) {
     const load = lastLoad + exercise.incrementLb;
@@ -107,13 +145,17 @@ export function nextPrescription(
     };
   }
 
-  if (prev && !improved(prev, last)) {
+  // The plan says "two consecutive sessions with no rep or weight progress",
+  // which is TWO failed transitions and therefore needs three data points.
+  // Comparing a single pair flagged a stall after one flat session, and with a
+  // 2-lift threshold two flat lifts on one bad day became a fatigue signal.
+  if (older && prev && !improved(older, prev) && !improved(prev, last)) {
     return {
       load: lastLoad,
       targetReps: exercise.defaultRepRange,
       sets: exercise.defaultSets,
       outcome: 'stalled',
-      reason: `No rep or load gain across ${prev.date} and ${last.date}. Check the bodyweight trend before changing programming — at a 0.25 lb/week gain the calories are usually the cause.`,
+      reason: `No rep or load gain across ${prev.date} and ${last.date}, following none across ${older.date} and ${prev.date}. Check the bodyweight trend before changing programming — at a 0.25 lb/week gain the calories are usually the cause.`,
     };
   }
 
@@ -154,7 +196,7 @@ export function rirDriftAtConstantLoad(
   history: readonly SessionPerformance[],
   minSessions = 3,
 ): number | null {
-  const sessions = [...history].sort((a, b) => a.date.localeCompare(b.date)).slice(-minSessions);
+  const sessions = accumulationSessions(history).slice(-minSessions);
   if (sessions.length < minSessions) return null;
 
   const loads = sessions.map((s) => Math.max(...s.sets.map((x) => x.addedWeightLb)));

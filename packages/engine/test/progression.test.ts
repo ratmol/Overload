@@ -102,13 +102,61 @@ describe('nextPrescription', () => {
     expect(r.load - 45).toBe(2.5);
   });
 
-  it('flags a stall after two sessions with no rep or load gain', () => {
+  it('flags a stall only after TWO consecutive failed transitions', () => {
+    // The plan says "two consecutive sessions with no rep or weight progress",
+    // which needs three data points. Comparing a single pair flagged a stall
+    // after one flat session, and two flat lifts on one bad day then became a
+    // deload trigger.
     const history = [
+      session('2026-07-27', [[30, 6], [30, 6], [30, 6], [30, 6]]),
       session('2026-08-03', [[30, 6], [30, 6], [30, 5], [30, 5]]),
       session('2026-08-10', [[30, 6], [30, 5], [30, 5], [30, 5]]),
     ];
     expect(nextPrescription(pullup, history).outcome).toBe('stalled');
     expect(isStalled(pullup, history)).toBe(true);
+  });
+
+  it('does not flag a stall after a single flat session', () => {
+    const history = [
+      session('2026-08-03', [[30, 6], [30, 6], [30, 5], [30, 5]]),
+      session('2026-08-10', [[30, 6], [30, 5], [30, 5], [30, 5]]),
+    ];
+    expect(nextPrescription(pullup, history).outcome).not.toBe('stalled');
+  });
+
+  it('does not count a deload session as a stall', () => {
+    // Deloads run at ~87.5% with belt weight stripped, so they look exactly
+    // like a regression. Counting them could trigger a second deload
+    // immediately after the first.
+    const history = [
+      session('2026-07-27', [[30, 8], [30, 8], [30, 8], [30, 8]]),
+      { ...session('2026-08-03', [[0, 6], [0, 6]]), isDeload: true },
+      session('2026-08-10', [[32.5, 5], [32.5, 5], [32.5, 5], [32.5, 5]]),
+    ];
+    expect(nextPrescription(pullup, history).outcome).not.toBe('stalled');
+  });
+
+  it('does not advance the load off a session that was cut short', () => {
+    // `every` is vacuously true on one set, so a single good set used to earn
+    // a load increase on a 4-set prescription.
+    const r = nextPrescription(pullup, [session('2026-08-03', [[30, 8]])]);
+    expect(r.outcome).not.toBe('advance-load');
+    expect(r.load).toBe(30);
+  });
+
+  it('holds bodyweight-only work at the entry standard before adding load', () => {
+    const r = nextPrescription({ ...pullup, entryStandardReps: 10 }, [
+      session('2026-08-03', [[0, 8], [0, 7], [0, 6], [0, 6]]),
+    ]);
+    expect(r.load).toBe(0);
+    expect(r.reason).toContain('10 strict');
+  });
+
+  it('releases the entry standard once every set clears it', () => {
+    const r = nextPrescription({ ...pullup, entryStandardReps: 10 }, [
+      session('2026-08-03', [[0, 10], [0, 10], [0, 11], [0, 10]]),
+    ]);
+    expect(r.reason).not.toContain('strict');
   });
 
   it('does not call it a stall when load rose and reps fell', () => {

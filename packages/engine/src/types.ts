@@ -38,15 +38,35 @@ export const UserProfile = z.object({
   birthYear: z.number().int().min(1900),
   unitPreference: z.enum(['imperial', 'metric']),
   goalType: GoalType,
-  /** Signed. Positive = intended gain, negative = intended loss. */
-  targetRatePerWeekLb: z.number(),
+  /**
+   * Acceptable rate band, lb/week, signed. Positive = gain.
+   * A BAND, not a point: the plan says 0.25-0.5 lb/week, and an engine that
+   * chases a scalar will adjust every single week because the observed rate is
+   * essentially never exactly equal to one number. Inside the band, do nothing.
+   */
+  targetRateBandLbPerWeek: z
+    .tuple([z.number(), z.number()])
+    .refine(([lo, hi]) => lo <= hi, 'rate band lo must be <= hi')
+    .refine(([lo, hi]) => Math.abs(lo) <= 3 && Math.abs(hi) <= 3, 'rate band is implausible'),
   /**
    * kcal per lb of bodyweight change. Overrides the phase default.
-   * See docs/ALGORITHM.md — this is NOT 3500.
+   * Bounded: below ~800 is less than lean tissue, above ~4300 is more than
+   * pure lipid. Anything outside that is a typo, not a preference.
    */
-  energyDensityOverride: z.number().positive().optional(),
+  energyDensityOverride: z.number().min(800).max(4300).optional(),
   /** When true, adjust() must never move the target. */
   caloriesLocked: z.boolean().default(false),
+  /**
+   * Absolute floor for the calorie target. Defaults are applied in adjust.ts.
+   * Exists because nothing else in the system stops a downward ratchet.
+   */
+  minTargetKcal: z.number().positive().optional(),
+  /**
+   * Date the baseline bloodwork was done (iron/ferritin, B12, D, TSH, celiac).
+   * Null means not done. The engine surfaces this rather than silently
+   * assuming every flat trend is a calorie problem.
+   */
+  medicalScreenCompletedDate: IsoDate.nullable().default(null),
 });
 export type UserProfile = z.infer<typeof UserProfile>;
 
@@ -99,7 +119,17 @@ export type ScanRecord = z.infer<typeof ScanRecord>;
 export const MuscleGroup = z.enum([
   'chest',
   'upperChest',
+  /** Total lat volume, including heavy vertical pulling. */
   'lats',
+  /**
+   * Width-biased lat work specifically: wide grips, higher reps, loaded
+   * stretch. Tracked SEPARATELY from `lats` because heavy weighted pull-ups
+   * are an excellent thickness stimulus and a mediocre width one. Without this
+   * split, swapping both pulldown slots for heavy rows leaves total lat volume
+   * looking healthy while width work goes to zero — the exact mistake the
+   * training plan was written to correct.
+   */
+  'latsWidth',
   'upperBack',
   'lowerBack',
   'frontDelts',
@@ -145,6 +175,13 @@ export const Exercise = z.object({
   defaultSets: z.number().int().positive(),
   /** Seeded from the plan. Not authoritative once real sets exist. */
   startingLoadLb: z.number().nonnegative().optional(),
+  /**
+   * Strict bodyweight reps required before any load may be added.
+   * From the plan: 10 on pull-ups, 12 on dips. The one hard safety rule in the
+   * loading section. Also applies coming out of a deload, where the belt is
+   * stripped back to bodyweight.
+   */
+  entryStandardReps: z.number().int().positive().optional(),
   notes: z.string().optional(),
 });
 export type Exercise = z.infer<typeof Exercise>;
@@ -164,6 +201,17 @@ export const Session = z.object({
   /** 1-5, user-reported. Feeds deload triggers. */
   sleepQuality: z.number().int().min(1).max(5).optional(),
   jointPainFlag: z.boolean().optional(),
+  /**
+   * Morning resting heart rate, bpm. The plan's most valuable deload trigger:
+   * objective, auto-collectable from any wearable, and the only signal in the
+   * list that fires before performance visibly drops.
+   */
+  restingHeartRateBpm: z.number().int().min(20).max(200).optional(),
+  /**
+   * Genuine dread about training, as opposed to ordinary reluctance. One tap,
+   * and in practice the trigger people actually act on.
+   */
+  dreadFlag: z.boolean().optional(),
 });
 export type Session = z.infer<typeof Session>;
 

@@ -183,13 +183,15 @@ describe('computeTrend', () => {
 });
 
 describe('warm-up', () => {
-  it('reports four half-lives as the settling period', () => {
-    expect(trendWarmupDays(7)).toBe(28);
+  it('reports eight half-lives as the settling period', () => {
+    // Four half-lives (28 days) released the gate at the point of MAXIMUM
+    // bias (-31%). The bias falls under 5% around 56 days.
+    expect(trendWarmupDays(7)).toBe(56);
   });
 
-  it('is warming up on three weeks of data', () => {
+  it('is warming up at four weeks, where the bias is worst', () => {
     const series = computeTrend(
-      makeWeights({ start: '2026-08-01', days: 21, startWeightLb: 132.6, lbPerWeek: 0.4 }),
+      makeWeights({ start: '2026-08-01', days: 28, startWeightLb: 132.6, lbPerWeek: 0.4 }),
     );
     expect(isWarmingUp(series)).toBe(true);
   });
@@ -200,6 +202,37 @@ describe('warm-up', () => {
     );
     expect(isWarmingUp(series)).toBe(false);
     expect(trendSlopePerDay(series, 28)! * 7).toBeCloseTo(0.4, 1);
+  });
+
+  it('does not call a sparse series settled just because it spans enough days', () => {
+    // Two readings 60 days apart produce a 61-point carried-forward series.
+    const series = computeTrend([
+      { id: 'a', date: '2026-08-01', weightLb: 132, source: 'manual', flaggedOutlier: false },
+      { id: 'b', date: '2026-09-30', weightLb: 136, source: 'manual', flaggedOutlier: false },
+    ]);
+    expect(series.length).toBeGreaterThan(56);
+    expect(isWarmingUp(series)).toBe(true);
+  });
+
+  it('measures the documented warm-up bias, so the doc table stays honest', () => {
+    const rate = (days: number) => {
+      const slopes = Array.from({ length: 15 }, (_, seed) => {
+        const s = computeTrend(
+          makeWeights({
+            start: '2026-08-01',
+            days,
+            startWeightLb: 132.6,
+            lbPerWeek: 0.4,
+            noiseSd: 0.8,
+            seed,
+          }),
+        );
+        return trendSlopePerDay(s, 28)! * 7;
+      });
+      return slopes.reduce((a, b) => a + b, 0) / slopes.length;
+    };
+    expect(rate(28)).toBeLessThan(0.33); // heavily biased where the old gate opened
+    expect(Math.abs(rate(56) - 0.4)).toBeLessThan(0.06); // settled where it opens now
   });
 
   it('recovers the true rate on a clean 8-week gain', () => {

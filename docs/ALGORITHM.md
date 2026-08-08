@@ -31,14 +31,17 @@ point.
 ### 1.1 The warm-up bias — the most important caveat in this file
 
 An EWMA seeded from a short mean lags a genuine trend while it catches up, so
-the *slope* of the trend is biased toward zero early on. Measured on synthetic
-data at a true 0.4 lb/week gain:
+the *slope* of the trend is biased toward zero early on. Measured over 25 seeds
+at a true 0.4 lb/week gain with 0.8 lb daily noise (pinned by a test, so this
+table cannot drift away from the code):
 
 | History | Recovered rate | Error |
 |---|---|---|
-| 42 days | 0.24-0.37 lb/wk | up to 40% low |
-| 60 days | 0.39 lb/wk | ~3% low |
-| 90 days | 0.38-0.40 lb/wk | <5% |
+| 28 days | 0.275 lb/wk | **31% low** |
+| 35 days | 0.352 lb/wk | 12% low |
+| 42 days | 0.374 lb/wk | 6% low |
+| 56 days | 0.390 lb/wk | 3% low |
+| 63 days+ | 0.410 lb/wk | ~2% high |
 
 **Why this matters practically.** An understated rate of gain looks like "you
 aren't gaining fast enough", and the adjustment logic responds by *adding*
@@ -47,9 +50,16 @@ single most likely way a naive implementation of this engine makes you fatter.
 
 **What we do about it.** We do not correct the bias — bias-correction on a
 hand-seeded EWMA introduces its own artefacts. Instead `isWarmingUp()` returns
-true below four half-lives (28 days) of history, and `estimateTdee` caps
-confidence at `low` while it holds. Combined with the adjustment guardrails,
-that means the engine does not act on a warming-up trend.
+true below **eight** half-lives (56 days) of history, and `estimateTdee` caps
+confidence at `low` while it holds, and `adjustTarget` hard-blocks on it.
+
+An earlier version used four half-lives (28 days), which released the gate at
+the point of *maximum* bias — the worst possible place to put it. The bias only
+falls under 5% around 56 days.
+
+`isWarmingUp` also checks the number of *real* readings, not just the calendar
+span. `computeTrend` carries the trend forward across gaps, so two readings 60
+days apart produce a 61-point series that would otherwise read as fully settled.
 
 ### 1.2 Slope
 
@@ -124,8 +134,12 @@ At a realistic 60/40 lean-to-fat accrual ratio:
                  = 740 kcal/week ≈ 105 kcal/day surplus
 ```
 
-A naive 3500 constant would prescribe roughly 200 kcal/day more than needed,
-which over six months is several pounds of avoidable fat.
+**Correcting an error that was in this document:** the excess from a naive 3500
+constant is **~95 kcal/day, not 200**. 200 kcal/day is the *total* the 3500
+figure attributes at 0.4 lb/week; the honest figure is 105, so the difference is
+95. An earlier draft mistook the total for the difference and overstated the
+flagship justification by 2x. Still worth fixing — 95 kcal/day over six months
+is real — but the honest number is the one that belongs here.
 
 | Phase | Constant | Reasoning |
 |---|---|---|
@@ -133,49 +147,108 @@ which over six months is several pounds of avoidable fat.
 | loss | **3200** | Loss is fat-dominant but not purely fat. |
 | maintain | 2500 | No meaningful direction; reuse the gain figure. |
 
-**Why 2500 and not the computed 1850.** Overestimating the density makes the
-engine *under-correct*: it attributes a given weight change to fewer calories
-than really caused it, so it moves the target less. On a lean gain, under-
-correcting is the safer failure direction — you drift slightly off target rather
-than oscillating. 1850 is the physiologically honest number and 2500 is the
-conservative engineering choice; the gap is a decision, not an error. It is
-configurable per user via `energyDensityOverride`.
+**Why 2500 and not the computed 1850 — and a correction.**
+
+An earlier version of this document justified 2500 by claiming that
+overestimating the density makes the engine *under-correct*. That reasoning was
+wrong, with the sign inverted twice:
+
+- Overestimating density attributes a given weight change to **more** calories,
+  not fewer.
+- In `adjust.ts` the delta is `rateError x density / 7`, so a **larger** density
+  produces a **larger** correction. 2500 over-corrects relative to 1850 by 35%.
+
+The value survives the correction; the reasoning does not. Redoing the
+derivation with more defensible inputs — 45/55 lean-to-fat partitioning (60/40
+is the optimistic ceiling for a trained lifter, not a central estimate), and a
+lean deposition cost of ~1150 kcal/lb once protein synthesis and turnover
+inefficiency are included rather than stored energy alone:
+
+```
+0.45 x 1150 + 0.55 x 3600 = 517 + 1980 = 2497
+```
+
+2500 is what honest inputs produce. The 1850 figure came from using 750 kcal/lb
+(stored energy in lean tissue, ignoring the metabolic cost of depositing it) and
+an optimistic partitioning ratio.
+
+Because the TDEE identity and the adjustment gain have **opposite** error
+sensitivities, the conservatism that used to be smuggled into this constant now
+lives where it can be seen: an explicit `damping` factor of 0.6 in `adjust.ts`.
+
+Configurable per user via `energyDensityOverride`, bounded to [800, 4300] — less
+than lean tissue or more than pure lipid is a typo, not a preference.
 
 `test/tdee.test.ts` contains a test asserting the gain constant is below 3500,
 purely so nobody "fixes" it back to the textbook number.
 
 ### 3.2 Confidence
 
-Three inputs, combined to low / medium / high, in priority order:
+Combined to low / medium / high, in priority order:
 
-1. **Warming up** (trend history < 28 days) → always `low`. See §1.1.
-2. **Under 14 logged days** → always `low`.
-3. **Coverage below 70%** of the window → capped at `low`.
-4. **28+ logged days with intake sd < 400 kcal** → `high`.
-5. Otherwise → `medium`.
+1. **Warming up** (trend history < 56 days) → always `low`. See §1.1.
+2. **Last weigh-in more than 3 days old** → always `low`. Otherwise the intake
+   and weight halves of the identity are measured over different stretches of
+   time, which is an energy-balance violation, not a cosmetic issue.
+3. **Weigh-in coverage below 50%** → always `low`. Distinct from intake
+   coverage and easy to miss: the trend series is always dense because gaps are
+   carried forward, so weekly weigh-ins regressed as though daily read ~38% low
+   at "high" confidence.
+4. **Under 14 logged days** → always `low`.
+5. **Intake coverage below 70%** → capped at `low`.
+6. **Coverage >= 90%, window >= 28 days, weigh-in coverage >= 80%, intake sd <
+   400 kcal** → `high`. Gated on coverage rather than an absolute day count:
+   the old `loggedDays >= 28` on a 28-day window meant 100% logging, so one
+   missed day capped confidence at medium forever.
+7. Otherwise → `medium`.
 
-Displayed as a range, never a bare number: `2,480 kcal (2,360-2,600), medium`.
-The half-width is `1.96 × SEM` of window intake, floored at 60 kcal, rounded to
-10. It is an interval on the *intake* term only — it does not propagate slope
-uncertainty, so treat it as a lower bound on the real uncertainty. Widening it
-properly is a worthwhile refinement.
+Displayed as a range, never a bare number: `2,475 kcal (2,325-2,625), medium`.
 
-### 3.3 Shift days vs off days
+The half-width is `1.96 x SEM` of daily intake totals, **floored at 150 kcal**
+and rounded to 25. That floor is a deliberate honesty measure, not arithmetic.
+The interval covers the *intake* term only; it omits slope uncertainty and
+density uncertainty entirely. Propagating slope uncertainty correctly is harder
+than it looks, because the regression runs over an EWMA-**smoothed** series
+whose points are heavily autocorrelated — at a 7-day half-life over 28 days the
+effective sample size is nearer 4 than 28, so a naive OLS standard error would
+understate by roughly 2.5x. The true interval is plausibly 2-3x wider than the
+arithmetic suggests, so a +/-60 kcal range next to the word "confidence" was
+false precision of exactly the kind that makes someone trust an automated change
+they should have questioned.
 
-A standing retail shift can run 300-500 kcal above a rest day. Eating a flat
-number means a surplus on off days and roughly maintenance on shift days.
-MacroFactor does not model this.
+TDEE is also rounded to 25 kcal. Reporting it to the single calorie implies a
+precision that does not exist.
 
-Method: once both tags have ≥7 days in the window, attribute the difference in
-*mean intake* between tag types to a difference in expenditure, then distribute
-it around the pooled estimate by each tag's share of days.
+### 3.3 Shift days vs off days — a function that was removed
 
-**This is the weakest inference in the engine and it is bounded for that
-reason.** Intake difference is a proxy for expenditure difference; you may
-simply eat more on shift days for reasons unrelated to NEAT. The delta is
-clamped to `[0, 600]` kcal, and returns `null` rather than a guess below the
-minimum day count. The honest fix is step count as a direct input, which is a
-later refinement.
+A standing retail shift can run 300-500 kcal above a rest day, so eating a flat
+number likely means a surplus on off days and roughly maintenance on shift days.
+That is a real problem and MacroFactor does not model it.
+
+**The engine no longer claims to solve it.** `estimateTaggedExpenditure` was
+deleted and replaced with `summariseTaggedIntake`, which reports a descriptive
+statistic and nothing more. The original was not defensible:
+
+- **It was circular.** `shift - off` came out algebraically identical to
+  `meanIntake(shift) - meanIntake(off)`. The function never touched the weight
+  trend, so it contained exactly zero evidence about expenditure. Once the app
+  started issuing split targets, the next window's intake difference would equal
+  the prescribed difference, which the engine would re-attribute to expenditure
+  — self-confirming, with no external anchor.
+- **The `[0, 600]` clamp censored the disconfirming direction.** A user who is
+  busier and eats *less* on shift days — the common retail case, and the one
+  where a split target actually matters — was told "no measurable difference,
+  eating the same on both is fine." That is the opposite of the truth.
+
+The replacement reports the signed difference, a Welch interval on it, and
+whether it clears its own noise floor. That last part matters: with daily intake
+sd around 200 kcal and a few weeks per tag, the sampling margin alone is roughly
++/-120 kcal, so a fixed "is it more than 50 kcal?" cutoff would report pure
+noise as a finding most of the time.
+
+The honest version of the expenditure question needs step count as a direct
+input, or a regression of daily trend change on intake with a tag dummy over far
+more than 7 days per tag. Until then, describe what was measured.
 
 ---
 
@@ -186,17 +259,55 @@ feature. The engine declining to act is correct far more often than acting on
 thin data.
 
 ```
-- No adjustment while the trend filter is warming up (< 28 days history)
-- No adjustment with a window shorter than 14 days
-- No adjustment with fewer than 10 logged days in the window
-- Maximum ±100 kcal per adjustment
-- Maximum one adjustment per 7 days
-- No adjustment during a deload week
-- No adjustment within 3 days after a deload week
+- No adjustment while the trend filter is warming up (< 56 days history)
+- No adjustment at low confidence, for any reason confidence is low
+- No adjustment on a non-finite slope or density
+- No adjustment with fewer than 14 logged days in the window
+- No adjustment below 70% intake coverage
+- Maximum +/-100 kcal per adjustment
+- Maximum one adjustment per 14 days
+- Only 60% of the computed correction is applied (damping)
+- No adjustment while the observed rate is inside the target BAND
+- No adjustment during a deload week, or within 3 days after one
 - No adjustment if the user has locked calories
-- Changes below 25 kcal are treated as zero
+- No adjustment below the 1600 kcal floor
+- No adjustment below the low end of estimated expenditure on a gain phase
+- Changes below 25 kcal are treated as zero, not rounded up to 25
+- Escalate to needs-review instead of adjusting when good data still will not move
 - Every adjustment stores a human-readable reason string
 ```
+
+**The three that were missing.** The warming-up and low-confidence blocks were
+described in this document, in the package README, and in CLAUDE.md — and did
+not exist in `adjust.ts`. The adjustment engine was acting on data the estimator
+itself had labelled untrustworthy. There were no tests for either, which is
+precisely why the gap survived. Documentation is not a guardrail.
+
+**Why a band, not a point.** The training plan specifies 0.25-0.5 lb/week. An
+engine comparing against a scalar with a 25 kcal rounding step had an effective
+deadband of 0.035 lb/week — far below what a smoothed scale trend can resolve —
+so its steady state was a +/-100 kcal move nearly every cycle, usually at the
+cap. Inside the band, do nothing. Outside it, correct toward the nearest *edge*,
+because aiming at the middle guarantees overshooting half the time.
+
+**Why 14 days and damping.** This is a controller with a 2-3 week lag. Adjusting
+weekly into that lag is textbook integral windup: it stacks corrections for a
+change it cannot see yet. The concrete failure — starting creatine and raising
+carbs adds 2-4 lb of water and glycogen over a fortnight, which reads as ~1
+lb/week of "gain" and invites repeated cuts for something that was never tissue.
+
+**Why a floor.** Nothing else in the system bounded a downward ratchet: at 100
+kcal/week with no floor, a target can reach RMR in under three months. 1600 is
+roughly 1.15x an estimated RMR of ~1394 for this user, and below it the plan's
+own minimums (130 g protein, 60 g fat floor) consume two thirds of intake and
+leave no training fuel, making the plan internally incoherent.
+
+**Why needs-review.** The engine's only vocabulary for a flat trend used to be
+"add 100 more calories", forever. A verified surplus with no response over
+several cycles is close to the textbook presentation of the causes the training
+plan lists as highest priority to rule out — iron and ferritin, B12, vitamin D,
+TSH, celiac. The engine now stops and says so rather than absorbing a medical
+signal into weekly calorie increments.
 
 **The reason string is the product.** If a plain-English explanation cannot be
 generated, the change does not happen. That single rule is what separates this
@@ -233,7 +344,19 @@ stalled on pull-ups and dips.
 - Every working set hit the top of the range → add one increment, reset to the
   bottom of the range.
 - Otherwise → same load, chase reps.
-- Two consecutive sessions with no gain in *either* reps or load → `stalled`.
+- **Two consecutive failed transitions** with no gain in *either* reps or load
+  → `stalled`. That needs three data points, not two. Comparing a single pair
+  flagged a stall after one flat session, and with a 2-lift threshold two flat
+  lifts on one bad day became a fatigue signal.
+- Deload sessions are excluded entirely. They run at ~87.5% with belt weight
+  stripped, so they look identical to a regression; counting them meant the
+  first session back read as a stall and could trigger a second deload.
+- A load increase requires the **full prescribed set count**. `every` is
+  vacuously true on a single set, so a session cut short after one good set used
+  to earn a load increase.
+- Where `entryStandardReps` is set (10 on pull-ups, 12 on dips), no load is
+  added until every set clears it. The one hard safety rule in the plan's
+  loading section, and it also applies coming out of a deload.
 
 "Gain" is total reps at equal-or-higher load. A session where load rose and reps
 fell is progress, not a stall — a naive total-reps comparison gets this wrong and
@@ -245,12 +368,21 @@ most common thing people get wrong on these lifts.
 
 ### 5.3 Deload triggers
 
-Fires on the scheduled 7-week timer, **or** on two or more of:
+Fires at the end of **6 weeks of accumulation** (so the deload is week 7),
+**or** on two or more of:
 
 - 2+ lifts flagged stalled in the same week
 - RIR trending down at constant load (same work, more effort)
 - Self-reported sleep quality below 3 for 4+ consecutive sessions
 - Joint pain flagged on 2+ consecutive sessions
+- Resting heart rate 5+ bpm above personal baseline for 3+ sessions
+- Genuine dread about training on 2+ consecutive sessions
+
+The timer was previously set at `>= 7 * 7` days, which fired on day 49 — a full
+week late, on a dip- and pull-up-heavy program.
+
+Resting HR requires a **personal baseline**; an absolute bpm threshold is
+meaningless when 48 and 70 are both normal for different people.
 
 Two-of-N rather than one-of-N because every single signal has a high
 false-positive rate on its own. One bad night is not fatigue.

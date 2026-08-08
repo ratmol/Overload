@@ -104,3 +104,58 @@ describe('detectDeload', () => {
     expect(detectDeload(base).reason.length).toBeGreaterThan(0);
   });
 });
+
+describe('resting heart rate and dread', () => {
+  const hr = (date: string, bpm: number) => ({ date, restingHeartRateBpm: bpm });
+
+  it('fires when resting HR sits above baseline for several days', () => {
+    const r = detectDeload({
+      ...base,
+      baselineRestingHeartRateBpm: 55,
+      recentSessions: [hr('2026-08-24', 55), hr('2026-08-26', 61), hr('2026-08-29', 62), hr('2026-08-31', 60)],
+    });
+    expect(r.signals).toContain('resting-hr-elevated');
+  });
+
+  it('does not fire on a single elevated morning', () => {
+    const r = detectDeload({
+      ...base,
+      baselineRestingHeartRateBpm: 55,
+      recentSessions: [hr('2026-08-29', 55), hr('2026-08-31', 62)],
+    });
+    expect(r.signals).not.toContain('resting-hr-elevated');
+  });
+
+  it('needs a personal baseline, since absolute bpm means nothing on its own', () => {
+    const r = detectDeload({
+      ...base,
+      recentSessions: [hr('2026-08-26', 75), hr('2026-08-29', 76), hr('2026-08-31', 77)],
+    });
+    expect(r.signals).not.toContain('resting-hr-elevated');
+  });
+
+  it('fires on dread across consecutive sessions', () => {
+    const r = detectDeload({
+      ...base,
+      recentSessions: [
+        { date: '2026-08-26', dreadFlag: false },
+        { date: '2026-08-29', dreadFlag: true },
+        { date: '2026-08-31', dreadFlag: true },
+      ],
+    });
+    expect(r.signals).toContain('dread');
+  });
+
+  it('combines two of the new signals into a recommendation', () => {
+    const r = detectDeload({
+      ...base,
+      baselineRestingHeartRateBpm: 55,
+      recentSessions: [
+        { date: '2026-08-26', restingHeartRateBpm: 62, dreadFlag: true },
+        { date: '2026-08-29', restingHeartRateBpm: 63, dreadFlag: true },
+        { date: '2026-08-31', restingHeartRateBpm: 61, dreadFlag: true },
+      ],
+    });
+    expect(r.recommend).toBe(true);
+  });
+});

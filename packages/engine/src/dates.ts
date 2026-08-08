@@ -4,7 +4,12 @@ import type { IsoDate } from './types.js';
 const MS_PER_DAY = 86_400_000;
 
 export function toEpochDay(date: IsoDate): number {
-  return Math.floor(Date.parse(`${date}T00:00:00Z`) / MS_PER_DAY);
+  const ms = Date.parse(`${date}T00:00:00Z`);
+  // Without this, a malformed date yields NaN, daysBetween yields NaN, and
+  // computeTrend's `for (i = 0; i <= NaN; i++)` never executes — returning an
+  // empty series for a log that plainly has entries in it. Fail loudly.
+  if (Number.isNaN(ms)) throw new RangeError(`invalid date: ${date}`);
+  return Math.floor(ms / MS_PER_DAY);
 }
 
 export function fromEpochDay(day: number): IsoDate {

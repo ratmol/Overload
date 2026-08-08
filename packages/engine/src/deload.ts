@@ -14,7 +14,9 @@ export type DeloadSignal =
   | 'multiple-stalls'
   | 'rir-declining'
   | 'poor-sleep'
-  | 'joint-pain';
+  | 'joint-pain'
+  | 'resting-hr-elevated'
+  | 'dread';
 
 export interface DeloadInputs {
   today: IsoDate;
@@ -26,14 +28,26 @@ export interface DeloadInputs {
   stalledExerciseIds: readonly string[];
   /** Mean RIR change per session at constant load, from progression.ts. */
   rirDriftPerSession: number | null;
-  /** Recent sessions, used for sleep and joint pain flags. */
-  recentSessions: readonly Pick<Session, 'date' | 'sleepQuality' | 'jointPainFlag'>[];
+  /** Recent sessions, used for the self-reported and wearable signals. */
+  recentSessions: readonly Pick<
+    Session,
+    'date' | 'sleepQuality' | 'jointPainFlag' | 'restingHeartRateBpm' | 'dreadFlag'
+  >[];
+  /**
+   * The user's normal resting heart rate. Without a personal baseline an
+   * absolute bpm threshold is meaningless — a 48 bpm athlete and a 70 bpm
+   * average adult are both normal.
+   */
+  baselineRestingHeartRateBpm?: number;
 }
 
 export interface DeloadOptions {
   sleepQualityThreshold: number;
   sleepConsecutiveDays: number;
   jointPainConsecutiveSessions: number;
+  /** bpm above personal baseline that counts as a signal. */
+  restingHrRiseBpm: number;
+  restingHrConsecutiveSessions: number;
   /** RIR drift more negative than this counts as a signal. */
   rirDriftThreshold: number;
   stallCountThreshold: number;
@@ -43,6 +57,8 @@ export const DEFAULT_DELOAD_OPTIONS: DeloadOptions = {
   sleepQualityThreshold: 3,
   sleepConsecutiveDays: 4,
   jointPainConsecutiveSessions: 2,
+  restingHrRiseBpm: 5,
+  restingHrConsecutiveSessions: 3,
   rirDriftThreshold: -0.3,
   stallCountThreshold: 2,
 };
@@ -83,6 +99,19 @@ export function detectDeload(
     s.jointPainFlag === undefined ? null : s.jointPainFlag,
   );
   if (painRun >= o.jointPainConsecutiveSessions) signals.push('joint-pain');
+
+  if (inputs.baselineRestingHeartRateBpm !== undefined) {
+    const baseline = inputs.baselineRestingHeartRateBpm;
+    const hrRun = trailingRun(sessions, (s) =>
+      s.restingHeartRateBpm === undefined
+        ? null
+        : s.restingHeartRateBpm - baseline >= o.restingHrRiseBpm,
+    );
+    if (hrRun >= o.restingHrConsecutiveSessions) signals.push('resting-hr-elevated');
+  }
+
+  const dreadRun = trailingRun(sessions, (s) => (s.dreadFlag === undefined ? null : s.dreadFlag));
+  if (dreadRun >= 2) signals.push('dread');
 
   const fatigueSignals = signals.filter((s) => s !== 'scheduled');
   const recommend = scheduled || fatigueSignals.length >= 2;
@@ -133,6 +162,10 @@ function label(signal: DeloadSignal, inputs: DeloadInputs): string {
       return 'sleep quality low for several days';
     case 'joint-pain':
       return 'joint pain across consecutive sessions';
+    case 'resting-hr-elevated':
+      return 'resting heart rate up several days running';
+    case 'dread':
+      return 'real dread about training, not ordinary reluctance';
     case 'scheduled':
       return 'scheduled timer expired';
   }

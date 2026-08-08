@@ -9,7 +9,7 @@ No server. No account. No sync. Your data stays in your browser.
 
 | | |
 |---|---|
-| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 108 tests. **Start here.** |
+| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 148 tests. **Start here.** |
 | `apps/web` | React PWA. Not built yet. |
 | [`data/plan.json`](data/plan.json) | The training program as data, not code. |
 | [`docs/ALGORITHM.md`](docs/ALGORITHM.md) | Every constant and the assumption behind it. |

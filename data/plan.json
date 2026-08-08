@@ -1,20 +1,35 @@
 {
   "version": 1,
-  "name": "Upper/Lower 4-day — lean gain block, Aug 2026",
-  "deloadEveryWeeks": 7,
+  "name": "Upper/Lower 4-day \u2014 lean gain block, Aug 2026",
+  "deloadEveryWeeks": 6,
   "exercises": [
     {
       "id": "incline-db-press",
       "name": "Incline dumbbell press",
       "muscles": [
-        { "muscle": "upperChest", "fraction": 1 },
-        { "muscle": "chest", "fraction": 1 },
-        { "muscle": "frontDelts", "fraction": 0.5 },
-        { "muscle": "triceps", "fraction": 0.5 }
+        {
+          "muscle": "upperChest",
+          "fraction": 1
+        },
+        {
+          "muscle": "chest",
+          "fraction": 1
+        },
+        {
+          "muscle": "frontDelts",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "triceps",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [6, 8],
+      "defaultRepRange": [
+        6,
+        8
+      ],
       "defaultSets": 4,
       "startingLoadLb": 50,
       "notes": "Per-hand load. Lighter than previous 60x4-6 on purpose: rep-range shift out of 3-6."
@@ -23,45 +38,85 @@
       "id": "weighted-pullup",
       "name": "Weighted pull-up",
       "muscles": [
-        { "muscle": "lats", "fraction": 1 },
-        { "muscle": "upperBack", "fraction": 1 },
-        { "muscle": "biceps", "fraction": 0.5 },
-        { "muscle": "rearDelts", "fraction": 0.5 }
+        {
+          "muscle": "lats",
+          "fraction": 1
+        },
+        {
+          "muscle": "upperBack",
+          "fraction": 1
+        },
+        {
+          "muscle": "biceps",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": true,
       "incrementLb": 2.5,
-      "defaultRepRange": [5, 8],
+      "defaultRepRange": [
+        5,
+        8
+      ],
       "defaultSets": 4,
       "startingLoadLb": 30,
-      "notes": "Belt weight only. System load = bodyweight + belt. 5 lb is a ~4% jump at 132 lb BW, so increment is 2.5."
+      "notes": "Belt weight only. System load = bodyweight + belt. 5 lb is a ~4% jump at 132 lb BW, so increment is 2.5.",
+      "entryStandardReps": 10
     },
     {
       "id": "weighted-dip",
       "name": "Weighted dip",
       "muscles": [
-        { "muscle": "chest", "fraction": 1 },
-        { "muscle": "triceps", "fraction": 1 },
-        { "muscle": "frontDelts", "fraction": 0.5 }
+        {
+          "muscle": "chest",
+          "fraction": 1
+        },
+        {
+          "muscle": "triceps",
+          "fraction": 1
+        },
+        {
+          "muscle": "frontDelts",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": true,
       "incrementLb": 2.5,
-      "defaultRepRange": [6, 10],
+      "defaultRepRange": [
+        6,
+        10
+      ],
       "defaultSets": 3,
       "startingLoadLb": 45,
-      "notes": "Stop at upper arm parallel. Belt weight only."
+      "notes": "Stop at upper arm parallel. Belt weight only.",
+      "entryStandardReps": 12
     },
     {
       "id": "chest-supported-row",
       "name": "Chest-supported row",
       "muscles": [
-        { "muscle": "upperBack", "fraction": 1 },
-        { "muscle": "lats", "fraction": 0.5 },
-        { "muscle": "rearDelts", "fraction": 0.5 },
-        { "muscle": "biceps", "fraction": 0.5 }
+        {
+          "muscle": "upperBack",
+          "fraction": 1
+        },
+        {
+          "muscle": "lats",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "rearDelts",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "biceps",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [10, 12],
+      "defaultRepRange": [
+        10,
+        12
+      ],
       "defaultSets": 4,
       "notes": "Strict, no torso English. Posture correction."
     },
@@ -69,21 +124,38 @@
       "id": "incline-db-curl",
       "name": "Incline dumbbell curl",
       "muscles": [
-        { "muscle": "biceps", "fraction": 1 },
-        { "muscle": "forearms", "fraction": 0.5 }
+        {
+          "muscle": "biceps",
+          "fraction": 1
+        },
+        {
+          "muscle": "forearms",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [10, 12],
+      "defaultRepRange": [
+        10,
+        12
+      ],
       "defaultSets": 3
     },
     {
       "id": "cable-lateral-raise",
       "name": "Cable lateral raise",
-      "muscles": [{ "muscle": "sideDelts", "fraction": 1 }],
+      "muscles": [
+        {
+          "muscle": "sideDelts",
+          "fraction": 1
+        }
+      ],
       "isBodyweightLoaded": false,
       "incrementLb": 2.5,
-      "defaultRepRange": [12, 20],
+      "defaultRepRange": [
+        12,
+        20
+      ],
       "defaultSets": 4,
       "notes": "Priority 1 visual lever. Appears on both upper days. Do not skip when tired."
     },
@@ -91,12 +163,21 @@
       "id": "prone-y-raise",
       "name": "Prone or incline Y raise",
       "muscles": [
-        { "muscle": "lowerTraps", "fraction": 1 },
-        { "muscle": "rearDelts", "fraction": 0.5 }
+        {
+          "muscle": "lowerTraps",
+          "fraction": 1
+        },
+        {
+          "muscle": "rearDelts",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 2.5,
-      "defaultRepRange": [12, 15],
+      "defaultRepRange": [
+        12,
+        15
+      ],
       "defaultSets": 2,
       "startingLoadLb": 5,
       "notes": "Postural insurance, not a strength lift. 5-10 lb is plenty."
@@ -105,13 +186,25 @@
       "id": "back-squat",
       "name": "Back squat",
       "muscles": [
-        { "muscle": "quads", "fraction": 1 },
-        { "muscle": "glutes", "fraction": 0.5 },
-        { "muscle": "lowerBack", "fraction": 0.5 }
+        {
+          "muscle": "quads",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "lowerBack",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
-      "incrementLb": 10,
-      "defaultRepRange": [5, 8],
+      "incrementLb": 5,
+      "defaultRepRange": [
+        5,
+        8
+      ],
       "defaultSets": 4,
       "startingLoadLb": 185,
       "notes": "If 205 is currently a 5-8 rep set, start there instead. Depth over weight."
@@ -120,13 +213,25 @@
       "id": "romanian-deadlift",
       "name": "Romanian deadlift",
       "muscles": [
-        { "muscle": "hamstrings", "fraction": 1 },
-        { "muscle": "glutes", "fraction": 1 },
-        { "muscle": "lowerBack", "fraction": 0.5 }
+        {
+          "muscle": "hamstrings",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        },
+        {
+          "muscle": "lowerBack",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
-      "incrementLb": 10,
-      "defaultRepRange": [8, 10],
+      "incrementLb": 5,
+      "defaultRepRange": [
+        8,
+        10
+      ],
       "defaultSets": 3,
       "startingLoadLb": 115
     },
@@ -134,40 +239,73 @@
       "id": "leg-press",
       "name": "Leg press",
       "muscles": [
-        { "muscle": "quads", "fraction": 1 },
-        { "muscle": "glutes", "fraction": 0.5 }
+        {
+          "muscle": "quads",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 10,
-      "defaultRepRange": [10, 15],
+      "defaultRepRange": [
+        10,
+        15
+      ],
       "defaultSets": 4
     },
     {
       "id": "seated-leg-curl",
       "name": "Seated leg curl",
-      "muscles": [{ "muscle": "hamstrings", "fraction": 1 }],
+      "muscles": [
+        {
+          "muscle": "hamstrings",
+          "fraction": 1
+        }
+      ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [10, 15],
+      "defaultRepRange": [
+        10,
+        15
+      ],
       "defaultSets": 3
     },
     {
       "id": "standing-calf-raise",
       "name": "Standing calf raise",
-      "muscles": [{ "muscle": "calves", "fraction": 1 }],
+      "muscles": [
+        {
+          "muscle": "calves",
+          "fraction": 1
+        }
+      ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [8, 15],
+      "defaultRepRange": [
+        8,
+        15
+      ],
       "defaultSets": 4,
       "notes": "Full stretch, 2s pause at bottom."
     },
     {
       "id": "hanging-leg-raise",
       "name": "Hanging leg raise",
-      "muscles": [{ "muscle": "abs", "fraction": 1 }],
-      "isBodyweightLoaded": true,
+      "muscles": [
+        {
+          "muscle": "abs",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
       "incrementLb": 2.5,
-      "defaultRepRange": [10, 15],
+      "defaultRepRange": [
+        10,
+        15
+      ],
       "defaultSets": 3,
       "startingLoadLb": 0
     },
@@ -175,13 +313,25 @@
       "id": "barbell-bench-press",
       "name": "Barbell flat bench press",
       "muscles": [
-        { "muscle": "chest", "fraction": 1 },
-        { "muscle": "frontDelts", "fraction": 0.5 },
-        { "muscle": "triceps", "fraction": 0.5 }
+        {
+          "muscle": "chest",
+          "fraction": 1
+        },
+        {
+          "muscle": "frontDelts",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "triceps",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 2.5,
-      "defaultRepRange": [8, 12],
+      "defaultRepRange": [
+        8,
+        12
+      ],
       "defaultSets": 4,
       "startingLoadLb": 115,
       "notes": "Chosen over a second incline DB slot because 2.5 lb micro-loading beats 10 lb per-hand jumps."
@@ -190,35 +340,72 @@
       "id": "seated-cable-row",
       "name": "Seated cable row",
       "muscles": [
-        { "muscle": "upperBack", "fraction": 1 },
-        { "muscle": "lats", "fraction": 0.5 },
-        { "muscle": "biceps", "fraction": 0.5 }
+        {
+          "muscle": "upperBack",
+          "fraction": 1
+        },
+        {
+          "muscle": "lats",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "biceps",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [8, 12],
+      "defaultRepRange": [
+        8,
+        12
+      ],
       "defaultSets": 4
     },
     {
       "id": "wide-grip-pulldown",
       "name": "Wide-grip lat pulldown",
       "muscles": [
-        { "muscle": "lats", "fraction": 1 },
-        { "muscle": "upperBack", "fraction": 0.5 }
+        {
+          "muscle": "lats",
+          "fraction": 1
+        },
+        {
+          "muscle": "latsWidth",
+          "fraction": 1
+        },
+        {
+          "muscle": "upperBack",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [10, 15],
+      "defaultRepRange": [
+        10,
+        15
+      ],
       "defaultSets": 4,
       "notes": "Lat WIDTH, priority 3. Grip 1.5x shoulder width, full scapular elevation at top, stop at collarbone. Never let this become a heavy 5-rep grind."
     },
     {
       "id": "straight-arm-pulldown",
       "name": "Straight-arm pulldown",
-      "muscles": [{ "muscle": "lats", "fraction": 1 }],
+      "muscles": [
+        {
+          "muscle": "lats",
+          "fraction": 1
+        },
+        {
+          "muscle": "latsWidth",
+          "fraction": 1
+        }
+      ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [12, 15],
+      "defaultRepRange": [
+        12,
+        15
+      ],
       "defaultSets": 2,
       "notes": "Lats in the lengthened position. Light, slow, no torso swing."
     },
@@ -226,12 +413,21 @@
       "id": "low-to-high-cable-fly",
       "name": "Low-to-high cable fly",
       "muscles": [
-        { "muscle": "upperChest", "fraction": 1 },
-        { "muscle": "chest", "fraction": 1 }
+        {
+          "muscle": "upperChest",
+          "fraction": 1
+        },
+        {
+          "muscle": "chest",
+          "fraction": 1
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 2.5,
-      "defaultRepRange": [12, 15],
+      "defaultRepRange": [
+        12,
+        15
+      ],
       "defaultSets": 3,
       "notes": "Upper chest, priority 2."
     },
@@ -239,24 +435,42 @@
       "id": "reverse-pec-deck",
       "name": "Reverse pec deck / rear delt fly",
       "muscles": [
-        { "muscle": "rearDelts", "fraction": 1 },
-        { "muscle": "upperBack", "fraction": 0.5 }
+        {
+          "muscle": "rearDelts",
+          "fraction": 1
+        },
+        {
+          "muscle": "upperBack",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [15, 20],
+      "defaultRepRange": [
+        15,
+        20
+      ],
       "defaultSets": 3
     },
     {
       "id": "face-pull",
       "name": "Face pull",
       "muscles": [
-        { "muscle": "rearDelts", "fraction": 1 },
-        { "muscle": "lowerTraps", "fraction": 0.5 }
+        {
+          "muscle": "rearDelts",
+          "fraction": 1
+        },
+        {
+          "muscle": "lowerTraps",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 2.5,
-      "defaultRepRange": [15, 20],
+      "defaultRepRange": [
+        15,
+        20
+      ],
       "defaultSets": 2,
       "notes": "External rotation. Add a set if dips pinch the front of the shoulder."
     },
@@ -264,14 +478,25 @@
       "id": "deadlift",
       "name": "Trap bar or conventional deadlift",
       "muscles": [
-        { "muscle": "hamstrings", "fraction": 1 },
-        { "muscle": "glutes", "fraction": 1 },
-        { "muscle": "lowerBack", "fraction": 1 },
-        { "muscle": "quads", "fraction": 0.5 }
+        {
+          "muscle": "hamstrings",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        },
+        {
+          "muscle": "lowerBack",
+          "fraction": 1
+        }
       ],
       "isBodyweightLoaded": false,
-      "incrementLb": 10,
-      "defaultRepRange": [5, 6],
+      "incrementLb": 5,
+      "defaultRepRange": [
+        5,
+        6
+      ],
       "defaultSets": 3,
       "startingLoadLb": 155,
       "notes": "Likely a newer pattern. Build technique before load."
@@ -280,53 +505,95 @@
       "id": "bulgarian-split-squat",
       "name": "Bulgarian split squat",
       "muscles": [
-        { "muscle": "quads", "fraction": 1 },
-        { "muscle": "glutes", "fraction": 1 }
+        {
+          "muscle": "quads",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        }
       ],
-      "isBodyweightLoaded": true,
+      "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [8, 12],
+      "defaultRepRange": [
+        8,
+        12
+      ],
       "defaultSets": 3,
       "startingLoadLb": 0,
-      "notes": "Per leg. Bodyweight first session, then 20-25 lb dumbbells. Exposes limb asymmetry — see full DEXA report before loading heavy."
+      "notes": "Per leg. Bodyweight first session, then 20-25 lb dumbbells. Exposes limb asymmetry \u2014 see full DEXA report before loading heavy."
     },
     {
       "id": "leg-extension",
       "name": "Leg extension",
-      "muscles": [{ "muscle": "quads", "fraction": 1 }],
+      "muscles": [
+        {
+          "muscle": "quads",
+          "fraction": 1
+        }
+      ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [12, 20],
+      "defaultRepRange": [
+        12,
+        20
+      ],
       "defaultSets": 4
     },
     {
       "id": "lying-leg-curl",
       "name": "Lying leg curl",
-      "muscles": [{ "muscle": "hamstrings", "fraction": 1 }],
+      "muscles": [
+        {
+          "muscle": "hamstrings",
+          "fraction": 1
+        }
+      ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [8, 12],
+      "defaultRepRange": [
+        8,
+        12
+      ],
       "defaultSets": 3
     },
     {
       "id": "hip-thrust",
       "name": "Hip thrust",
       "muscles": [
-        { "muscle": "glutes", "fraction": 1 },
-        { "muscle": "hamstrings", "fraction": 0.5 }
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        },
+        {
+          "muscle": "hamstrings",
+          "fraction": 0.5
+        }
       ],
       "isBodyweightLoaded": false,
       "incrementLb": 10,
-      "defaultRepRange": [10, 15],
+      "defaultRepRange": [
+        10,
+        15
+      ],
       "defaultSets": 3
     },
     {
       "id": "seated-calf-raise",
       "name": "Seated calf raise",
-      "muscles": [{ "muscle": "calves", "fraction": 1 }],
+      "muscles": [
+        {
+          "muscle": "calves",
+          "fraction": 1
+        }
+      ],
       "isBodyweightLoaded": false,
       "incrementLb": 5,
-      "defaultRepRange": [12, 20],
+      "defaultRepRange": [
+        12,
+        20
+      ],
       "defaultSets": 3
     }
   ],
@@ -384,22 +651,100 @@
     }
   ],
   "volumeTargets": [
-    { "muscle": "sideDelts", "minSetsPerWeek": 6, "maxSetsPerWeek": 12, "priority": 1 },
-    { "muscle": "upperChest", "minSetsPerWeek": 6, "maxSetsPerWeek": 12, "priority": 2 },
-    { "muscle": "lats", "minSetsPerWeek": 12, "maxSetsPerWeek": 20, "priority": 3 },
-    { "muscle": "rearDelts", "minSetsPerWeek": 4, "maxSetsPerWeek": 10, "priority": 3 },
-    { "muscle": "lowerTraps", "minSetsPerWeek": 2, "maxSetsPerWeek": 6, "priority": 4 },
-    { "muscle": "chest", "minSetsPerWeek": 10, "maxSetsPerWeek": 16 },
-    { "muscle": "upperBack", "minSetsPerWeek": 12, "maxSetsPerWeek": 20 },
-    { "muscle": "quads", "minSetsPerWeek": 10, "maxSetsPerWeek": 16 },
-    { "muscle": "hamstrings", "minSetsPerWeek": 8, "maxSetsPerWeek": 14 },
-    { "muscle": "glutes", "minSetsPerWeek": 6, "maxSetsPerWeek": 14 },
-    { "muscle": "biceps", "minSetsPerWeek": 8, "maxSetsPerWeek": 14 },
-    { "muscle": "triceps", "minSetsPerWeek": 8, "maxSetsPerWeek": 14 },
-    { "muscle": "calves", "minSetsPerWeek": 6, "maxSetsPerWeek": 12 },
-    { "muscle": "abs", "minSetsPerWeek": 3, "maxSetsPerWeek": 10 },
-    { "muscle": "lowerBack", "minSetsPerWeek": 3, "maxSetsPerWeek": 10 },
-    { "muscle": "frontDelts", "minSetsPerWeek": 6, "maxSetsPerWeek": 16 },
-    { "muscle": "forearms", "minSetsPerWeek": 0, "maxSetsPerWeek": 12 }
+    {
+      "muscle": "sideDelts",
+      "minSetsPerWeek": 6,
+      "maxSetsPerWeek": 12,
+      "priority": 1
+    },
+    {
+      "muscle": "upperChest",
+      "minSetsPerWeek": 6,
+      "maxSetsPerWeek": 12,
+      "priority": 2
+    },
+    {
+      "muscle": "lats",
+      "minSetsPerWeek": 12,
+      "maxSetsPerWeek": 20
+    },
+    {
+      "muscle": "rearDelts",
+      "minSetsPerWeek": 4,
+      "maxSetsPerWeek": 10,
+      "priority": 3
+    },
+    {
+      "muscle": "lowerTraps",
+      "minSetsPerWeek": 2,
+      "maxSetsPerWeek": 6,
+      "priority": 4
+    },
+    {
+      "muscle": "chest",
+      "minSetsPerWeek": 10,
+      "maxSetsPerWeek": 16
+    },
+    {
+      "muscle": "upperBack",
+      "minSetsPerWeek": 12,
+      "maxSetsPerWeek": 18
+    },
+    {
+      "muscle": "quads",
+      "minSetsPerWeek": 10,
+      "maxSetsPerWeek": 16
+    },
+    {
+      "muscle": "hamstrings",
+      "minSetsPerWeek": 8,
+      "maxSetsPerWeek": 14
+    },
+    {
+      "muscle": "glutes",
+      "minSetsPerWeek": 6,
+      "maxSetsPerWeek": 18
+    },
+    {
+      "muscle": "biceps",
+      "minSetsPerWeek": 8,
+      "maxSetsPerWeek": 14
+    },
+    {
+      "muscle": "triceps",
+      "minSetsPerWeek": 6,
+      "maxSetsPerWeek": 14
+    },
+    {
+      "muscle": "calves",
+      "minSetsPerWeek": 6,
+      "maxSetsPerWeek": 12
+    },
+    {
+      "muscle": "abs",
+      "minSetsPerWeek": 3,
+      "maxSetsPerWeek": 10
+    },
+    {
+      "muscle": "lowerBack",
+      "minSetsPerWeek": 3,
+      "maxSetsPerWeek": 10
+    },
+    {
+      "muscle": "frontDelts",
+      "minSetsPerWeek": 4,
+      "maxSetsPerWeek": 16
+    },
+    {
+      "muscle": "forearms",
+      "minSetsPerWeek": 0,
+      "maxSetsPerWeek": 12
+    },
+    {
+      "muscle": "latsWidth",
+      "minSetsPerWeek": 6,
+      "maxSetsPerWeek": 10,
+      "priority": 3
+    }
   ]
 }
