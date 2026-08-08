@@ -1,0 +1,19 @@
+{
+  "name": "overload",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace @overload/engine",
+    "typecheck": "tsc --noEmit -p packages/engine/tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
