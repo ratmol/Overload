@@ -13,8 +13,10 @@ import { loadNutritionState } from '../../db/nutrition.js';
 import { todayIso } from '../../db/queries.js';
 import { go } from '../../lib/route.js';
 import { lb, shortDate } from '../../lib/format.js';
+import { computeReadiness } from '../../lib/readiness.js';
 import { TrendChart } from './TrendChart.js';
 import { AdjustmentCard } from './AdjustmentCard.js';
+import { ReadinessCard } from './ReadinessCard.js';
 
 export function BodyScreen() {
   const today = todayIso();
@@ -27,7 +29,8 @@ export function BodyScreen() {
 
   if (!state) return <div className="empty">…</div>;
 
-  const { profile, target, trend, estimate, decision, tagged, adjustments, latestRaw } = state;
+  const { profile, target, trend, intake, estimate, decision, tagged, adjustments, latestRaw } =
+    state;
 
   if (!profile || !target) {
     return (
@@ -59,6 +62,8 @@ export function BodyScreen() {
 
   return (
     <main>
+      <ReadinessCard readiness={computeReadiness(today, trend, intake)} />
+
       <section className="sheet">
         <p className="eyebrow">Weight trend</p>
         <div className="headline">

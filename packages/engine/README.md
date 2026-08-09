@@ -7,7 +7,7 @@ storage layer, no framework. Everything here is a function from data to a
 decision plus a human-readable reason for it.
 
 ```bash
-npm test        # 148 tests
+npm test        # 154 tests
 ```
 
 ---

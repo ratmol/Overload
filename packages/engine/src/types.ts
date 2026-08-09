@@ -234,6 +234,86 @@ export const SetLog = z.object({
 export type SetLog = z.infer<typeof SetLog>;
 
 // ---------------------------------------------------------------------------
+// Food
+// ---------------------------------------------------------------------------
+
+export const Meal = z.enum(['meal1', 'meal2', 'snack', 'meal3', 'prebed']);
+export type Meal = z.infer<typeof Meal>;
+
+export const Macros = z.object({
+  kcal: z.number().nonnegative(),
+  proteinG: z.number().nonnegative(),
+  carbsG: z.number().nonnegative(),
+  fatG: z.number().nonnegative(),
+  fiberG: z.number().nonnegative().optional(),
+});
+export type Macros = z.infer<typeof Macros>;
+
+/** A named amount of a food: "1 breast" = 174 g, "1 scoop" = 31 g. */
+export const Portion = z.object({
+  label: z.string().min(1),
+  grams: z.number().positive(),
+});
+export type Portion = z.infer<typeof Portion>;
+
+export const FoodItem = z.object({
+  id: Id,
+  /**
+   * Cooked vs raw belongs IN THE NAME, always. 100 g of raw chicken and 100 g
+   * of cooked chicken differ by roughly 30% in calories, USDA lists both under
+   * near-identical names, and picking the wrong one is a silent 200 kcal/day
+   * error that looks exactly like a metabolism.
+   */
+  name: z.string().min(1),
+  brand: z.string().optional(),
+  barcode: z.string().optional(),
+  /**
+   * Per 100 g, always. One canonical basis makes portion arithmetic a single
+   * multiplication instead of a unit-conversion layer, and Open Food Facts
+   * returns per-serving figures inconsistently enough that storing them would
+   * mean storing which basis each row used.
+   */
+  per100g: Macros,
+  portions: z.array(Portion).default([]),
+  source: z.enum(['usda', 'openfoodfacts', 'manual']),
+  /** FDC id or barcode, so a suspect entry can be re-checked at the source. */
+  sourceId: z.string().optional(),
+  isFavourite: z.boolean().default(false),
+  lastUsedAt: z.string().datetime().optional(),
+});
+export type FoodItem = z.infer<typeof FoodItem>;
+
+/**
+ * One food eaten. Many per day.
+ *
+ * The macros are a SNAPSHOT taken at log time, which is a deliberate exception
+ * to "nothing derived is stored" — see docs/DECISIONS.md §16. Correcting a
+ * food's macros later must not rewrite months of logged days, because those
+ * days already fed calorie decisions the engine made and explained. History is
+ * a record of what was believed at the time.
+ */
+export const FoodLogEntry = z.object({
+  id: Id,
+  date: IsoDate,
+  foodId: Id,
+  grams: z.number().positive(),
+  kcal: z.number().nonnegative(),
+  proteinG: z.number().nonnegative(),
+  carbsG: z.number().nonnegative(),
+  fatG: z.number().nonnegative(),
+  meal: Meal.optional(),
+  loggedAt: z.string().datetime(),
+});
+export type FoodLogEntry = z.infer<typeof FoodLogEntry>;
+
+export const SavedMeal = z.object({
+  id: Id,
+  name: z.string().min(1),
+  items: z.array(z.object({ foodId: Id, grams: z.number().positive() })).min(1),
+});
+export type SavedMeal = z.infer<typeof SavedMeal>;
+
+// ---------------------------------------------------------------------------
 // Plan (data/plan.json)
 // ---------------------------------------------------------------------------
 

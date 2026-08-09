@@ -10,6 +10,7 @@ import {
   computeTrend,
   daysBetween,
   estimateTdee,
+  reconcileIntake,
   summariseTaggedIntake,
   type ActivityTag,
   type AdjustDecision,
@@ -121,28 +122,47 @@ export interface NutritionState {
   estimate: TdeeEstimate | null;
   decision: AdjustDecision | null;
   tagged: ReturnType<typeof summariseTaggedIntake>;
+  /**
+   * Food-logged days whose shift/off tag had to be assumed. Excluded from the
+   * tagged comparison, counted normally everywhere else.
+   */
+  untaggedDates: IsoDate[];
   /** Latest weight reading, raw, for display next to the trend. */
   latestRaw: { date: IsoDate; weightLb: number } | null;
 }
 
 export async function loadNutritionState(today: IsoDate): Promise<NutritionState> {
-  const [profile, target, weights, intake, sessions] = await Promise.all([
+  const [profile, target, weights, intakeRows, foodLog, sessions] = await Promise.all([
     getProfile(),
     getTarget(),
     db.weights.orderBy('date').toArray(),
     db.intake.orderBy('date').toArray(),
+    db.foodLog.orderBy('date').toArray(),
     db.sessions.orderBy('date').toArray(),
   ]);
 
   const trend = computeTrend(weights);
   const last = weights[weights.length - 1];
 
+  // The single reconciled view. Nothing below this line knows there are two
+  // tables, and nothing is ever handed both concatenated — that would
+  // double-count every day recorded in both.
+  const { entries: intake, untaggedDates } = reconcileIntake(intakeRows, foodLog);
+
   const estimate =
     profile === undefined
       ? null
       : estimateTdee({ today, trend, intake, goalType: profile.goalType });
 
-  const tagged = summariseTaggedIntake(intake, today);
+  // Days with an assumed tag are dropped here specifically. The tag does not
+  // affect a calorie total, so they count toward the estimate; the shift/off
+  // comparison is entirely about the tag, so including a guess would be
+  // fabricating the exact thing being measured.
+  const untagged = new Set(untaggedDates);
+  const tagged = summariseTaggedIntake(
+    intake.filter((e) => !untagged.has(e.date)),
+    today,
+  );
 
   let decision: AdjustDecision | null = null;
   if (profile && target && estimate) {
@@ -176,6 +196,7 @@ export async function loadNutritionState(today: IsoDate): Promise<NutritionState
     estimate,
     decision,
     tagged,
+    untaggedDates,
     latestRaw: last ? { date: last.date, weightLb: last.weightLb } : null,
   };
 }

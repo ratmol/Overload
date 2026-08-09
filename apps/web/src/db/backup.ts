@@ -8,15 +8,18 @@
  * engine — so a hand-edited or truncated file is rejected whole rather than
  * applied halfway.
  *
- * Format 2 added the calorie tables. Format 1 files still import: an old
- * backup is exactly the situation a backup exists for, and refusing to read one
- * because the app moved on would defeat the point.
+ * Format 2 added the calorie tables, format 3 the food ones. Every older format
+ * still imports: an old backup is exactly the situation a backup exists for,
+ * and refusing to read one because the app moved on would defeat the point.
  */
 import { z } from 'zod';
 import {
   Adjustment,
   Exercise,
+  FoodItem,
+  FoodLogEntry,
   IntakeEntry,
+  SavedMeal,
   Session,
   SessionTemplate,
   SetLog,
@@ -25,7 +28,7 @@ import {
 } from '@overload/engine';
 import { db } from './db.js';
 
-export const BACKUP_FORMAT = 2;
+export const BACKUP_FORMAT = 3;
 
 const TargetStateSchema = z.object({
   id: z.literal('current'),
@@ -56,19 +59,47 @@ const BackupV2 = TrainingTables.extend({
   target: z.array(TargetStateSchema),
 });
 
-const AnyBackup = z.union([BackupV2, BackupV1]);
+const BackupV3 = BackupV2.extend({
+  format: z.literal(3),
+  foods: z.array(FoodItem),
+  foodLog: z.array(FoodLogEntry),
+  savedMeals: z.array(SavedMeal),
+});
 
-export type Backup = z.infer<typeof BackupV2>;
+const AnyBackup = z.union([BackupV3, BackupV2, BackupV1]);
 
-/** Fills in the tables a format 1 file predates. */
+export type Backup = z.infer<typeof BackupV3>;
+
+/**
+ * Fills in the tables an older file predates.
+ *
+ * Every past format still imports. An old backup is exactly the situation a
+ * backup exists for, and refusing to read one because the app moved on would
+ * defeat the entire point of having it.
+ */
 function upgrade(raw: z.infer<typeof AnyBackup>): Backup {
-  if (raw.format === 2) return raw;
-  return { ...raw, format: 2, intake: [], adjustments: [], target: [] };
+  const withCalories =
+    raw.format === 1 ? { ...raw, intake: [], adjustments: [], target: [] } : raw;
+  return raw.format === 3
+    ? raw
+    : { ...withCalories, format: 3, foods: [], foodLog: [], savedMeals: [] };
 }
 
 export async function exportAll(): Promise<Backup> {
-  const [exercises, templates, sessions, sets, weights, profile, intake, adjustments, target] =
-    await Promise.all([
+  const [
+    exercises,
+    templates,
+    sessions,
+    sets,
+    weights,
+    profile,
+    intake,
+    adjustments,
+    target,
+    foods,
+    foodLog,
+    savedMeals,
+  ] = await Promise.all([
       db.exercises.toArray(),
       db.templates.toArray(),
       db.sessions.toArray(),
@@ -78,6 +109,9 @@ export async function exportAll(): Promise<Backup> {
       db.intake.toArray(),
       db.adjustments.toArray(),
       db.target.toArray(),
+      db.foods.toArray(),
+      db.foodLog.toArray(),
+      db.savedMeals.toArray(),
     ]);
   return {
     format: BACKUP_FORMAT,
@@ -92,6 +126,9 @@ export async function exportAll(): Promise<Backup> {
     intake,
     adjustments,
     target,
+    foods,
+    foodLog,
+    savedMeals,
   };
 }
 
@@ -114,6 +151,8 @@ export interface ImportResult {
   weights: number;
   intake: number;
   adjustments: number;
+  foods: number;
+  foodLog: number;
 }
 
 /**
@@ -139,6 +178,9 @@ export async function importAll(raw: unknown): Promise<ImportResult> {
       db.intake,
       db.adjustments,
       db.target,
+      db.foods,
+      db.foodLog,
+      db.savedMeals,
     ],
     async () => {
       await Promise.all([
@@ -151,6 +193,9 @@ export async function importAll(raw: unknown): Promise<ImportResult> {
         db.intake.clear(),
         db.adjustments.clear(),
         db.target.clear(),
+        db.foods.clear(),
+        db.foodLog.clear(),
+        db.savedMeals.clear(),
       ]);
       await db.exercises.bulkAdd(backup.exercises);
       await db.templates.bulkAdd(backup.templates);
@@ -161,6 +206,9 @@ export async function importAll(raw: unknown): Promise<ImportResult> {
       await db.intake.bulkAdd(backup.intake);
       await db.adjustments.bulkAdd(backup.adjustments);
       await db.target.bulkAdd(backup.target);
+      await db.foods.bulkAdd(backup.foods);
+      await db.foodLog.bulkAdd(backup.foodLog);
+      await db.savedMeals.bulkAdd(backup.savedMeals);
     },
   );
 
@@ -173,5 +221,7 @@ export async function importAll(raw: unknown): Promise<ImportResult> {
     weights: backup.weights.length,
     intake: backup.intake.length,
     adjustments: backup.adjustments.length,
+    foods: backup.foods.length,
+    foodLog: backup.foodLog.length,
   };
 }

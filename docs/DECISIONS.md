@@ -302,6 +302,71 @@ change after data exists.
 
 ---
 
+## 16. Food logging is being built, reversing "probably never"
+
+`overload-project-spec.md` §13 lists "a food database or barcode scanner" under
+what not to build, at Stage 4 "at the earliest, probably never". The reasoning
+was that Cronometer already does this well and rebuilding it is waste.
+
+**That reasoning still holds for search over 300,000 foods. It does not hold for
+a list of the forty things actually eaten**, which is a different and much
+smaller product. The deciding fact is empirical: no intake is being logged at
+all, so the adaptive engine — the entire portfolio piece — is inert. A tool that
+gets used beats a better tool that does not.
+
+Scope is a personal food list plus barcode lookup, seeded from USDA with live
+lookup to add new foods. Not a searchable database of everything.
+
+**What does not change:** no server; both APIs are called from the browser and
+only when adding a food, never in the daily logging path. No network in
+`packages/engine`. Nothing derived is stored — except one thing, below.
+
+**Reversible?** The decision, yes. The data, no: once months of food rows exist,
+removing the feature means abandoning them.
+
+---
+
+## 17. Logged food snapshots its macros — the one exception to §5
+
+§5 says nothing derived is stored, and `FoodLogEntry` stores `kcal`,
+`proteinG`, `carbsG` and `fatG` alongside the `foodId` and `grams` they could be
+recomputed from. This is deliberate and it is the only exception in the schema.
+
+The reason is that the alternative is retroactive rewriting of history. Correct
+a food six weeks from now — the USDA entry turns out to be for raw chicken, not
+cooked — and a derived-at-read-time design silently changes every day that food
+appears in. Those days already fed calorie decisions the engine made, explained
+in a written reason, and that the user accepted. **A log is a record of what was
+believed at the time, not a view over current beliefs.**
+
+The cost is real: correcting a food does not fix past days, so a
+long-running error stays in the history. That is the right trade — a visible
+wrong number in the past is recoverable, and a silently mutating past is not.
+
+**Also decided here:**
+
+- **Two tables, not one.** `foodLog` is one row per food, many per day, written
+  incrementally. `intake` is one row per day or per imported line, and its
+  manual-entry path deletes every row for a date before inserting. Sharing a
+  table would mean logging breakfast and later opening manual entry destroys
+  breakfast. `reconcileIntake` merges them at read time, food rows winning
+  where they exist because they are the more specific record. Nothing is ever
+  handed both tables concatenated — that double-counts every day in both.
+- **`isFavourite` is not indexed**, contrary to the spec's proposed schema.
+  IndexedDB keys may only be numbers, strings, Dates, ArrayBuffers or Arrays, so
+  indexing a boolean silently indexes nothing and the query returns empty
+  forever without erroring. A few dozen staples sort fine in memory.
+- **An assumed shift/off tag is reported, not hidden.** Food rows carry no
+  activity tag. Days where one had to be assumed still count toward the calorie
+  estimate, which ignores the tag entirely, and are excluded from the shift/off
+  comparison, which is *entirely* about the tag. Defaulting silently to `off`
+  would fabricate the exact quantity being measured.
+
+**Reversible?** The snapshot, no — past rows would have to be recomputed, which
+is the thing it exists to prevent.
+
+---
+
 <!--
 Template for new entries:
 

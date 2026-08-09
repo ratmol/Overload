@@ -5,7 +5,7 @@ calorie engine that explains every number it produces.
 
 No server. No account. No sync. Your data stays in your browser.
 
-**Status:** both halves are built and wired together. 168 tests. The app logs
+**Status:** both halves are built and wired together. 182 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -17,7 +17,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 
 | | |
 |---|---|
-| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 148 tests. **Start here.** |
+| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 154 tests. **Start here.** |
 | [`apps/web`](apps/web) | React PWA. The logger and the dashboard. |
 | [`data/plan.json`](data/plan.json) | The training program as data, not code. |
 | [`docs/ALGORITHM.md`](docs/ALGORITHM.md) | Every constant and the assumption behind it. |
@@ -26,7 +26,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 148 engine + 20 CSV-import tests
+npm test           # 154 engine + 28 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -40,8 +40,8 @@ genuine progress look like a plateau. When bodyweight is unknown the app prints
 `—` rather than a number that would read as a plateau.
 
 **An energy density constant that isn't 3500.** 3500 kcal/lb is body fat. Tissue
-gained on a lean gain is a mix, and using the textbook number overfeeds by
-roughly 200 kcal/day. [Why this matters](packages/engine#1-the-energy-density-constant-is-not-3500).
+gained on a lean gain is a mix, and using the textbook number misattributes
+roughly 95 kcal/day at a 0.35 lb/week gain. [Why this matters](packages/engine#1-the-energy-density-constant-is-not-3500).
 
 **Separate expenditure for active and rest days.** A standing shift can run
 300-500 kcal above an off day. Eating one flat number means a surplus on half of

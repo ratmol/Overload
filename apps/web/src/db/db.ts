@@ -14,7 +14,10 @@ import Dexie, { type Table } from 'dexie';
 import type {
   Adjustment,
   Exercise,
+  FoodItem,
+  FoodLogEntry,
   IntakeEntry,
+  SavedMeal,
   Session,
   SessionTemplate,
   SetLog,
@@ -76,6 +79,18 @@ export class OverloadDb extends Dexie {
   intake!: Table<IntakeEntry, string>;
   adjustments!: Table<Adjustment, string>;
   target!: Table<TargetState, string>;
+  foods!: Table<FoodItem, string>;
+  /**
+   * One row per food eaten, many per day, written incrementally.
+   *
+   * Deliberately NOT the same table as `intake`, which means one row per day or
+   * per imported line and whose manual-entry path deletes every row for a date
+   * before inserting. Sharing a table would mean logging breakfast and later
+   * opening manual entry silently destroys breakfast. The two are reconciled by
+   * `reconcileIntake` at read time.
+   */
+  foodLog!: Table<FoodLogEntry, string>;
+  savedMeals!: Table<SavedMeal, string>;
 
   constructor() {
     super('overload');
@@ -105,6 +120,25 @@ export class OverloadDb extends Dexie {
       intake: 'id, date, activityTag',
       adjustments: 'id, date',
       target: 'id',
+    });
+
+    // v3 adds food logging. Additive again.
+    //
+    // The spec proposed `foods: 'id, name, barcode, isFavourite, lastUsedAt'`.
+    // `isFavourite` is dropped from the index here: IndexedDB keys may only be
+    // numbers, strings, Dates, ArrayBuffers or Arrays, so indexing a BOOLEAN
+    // silently indexes nothing — `where('isFavourite').equals(true)` would
+    // return an empty set forever, and nothing would report an error. It is a
+    // personal list of a few dozen staples, so favourites and recency are
+    // sorted in memory where the behaviour is visible.
+    //
+    // `[date+meal]` is a compound index over an optional field, so rows with no
+    // meal are absent from it. Correct for "show me breakfast", wrong for "show
+    // me the day" — that uses the plain `date` index.
+    this.version(3).stores({
+      foods: 'id, name, barcode, lastUsedAt',
+      foodLog: 'id, date, foodId, [date+meal]',
+      savedMeals: 'id',
     });
   }
 }

@@ -4,15 +4,30 @@
  * There is no server, so there is no "restore from account". The export file is
  * the only backup that exists and the screen says so in those words.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db.js';
 import { exportAll, downloadBackup, importAll, type ImportResult } from '../../db/backup.js';
+import {
+  persistenceState,
+  requestPersistence,
+  storageEstimate,
+  type PersistenceState,
+} from '../../lib/persistence.js';
 
 export function DataScreen() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [persistence, setPersistence] = useState<PersistenceState | null>(null);
+  const [used, setUsed] = useState<string | null>(null);
+
+  useEffect(() => {
+    void persistenceState().then(setPersistence);
+    void storageEstimate().then((e) => {
+      if (e) setUsed(`${(e.usage / 1024 / 1024).toFixed(1)} MB of ${Math.round(e.quota / 1024 / 1024)} MB`);
+    });
+  }, []);
 
   const counts = useLiveQuery(async () => ({
     sessions: await db.sessions.count(),
@@ -40,8 +55,10 @@ export function DataScreen() {
       const result: ImportResult = await importAll(parsed);
       setMessage(
         `Imported ${result.sessions} sessions, ${result.sets} sets, ${result.weights} weigh-ins, ` +
-          `${result.intake} intake rows.` +
-          (result.format < 2 ? ' (Older backup format — it had no calorie data.)' : ''),
+          `${result.intake} intake rows, ${result.foodLog} food entries.` +
+          (result.format < 3
+            ? ` (Format ${result.format} backup — it predates ${result.format < 2 ? 'the calorie' : 'the food'} tables, so those are empty.)`
+            : ''),
       );
     } catch (err) {
       // Nothing was written: importAll validates the whole file before the
@@ -130,6 +147,49 @@ export function DataScreen() {
 
         {message && <p className="hint">{message}</p>}
         {error && <p className="hint" style={{ color: 'var(--mark)' }}>{error}</p>}
+      </section>
+
+      <section className="sheet">
+        <p className="eyebrow">Storage</p>
+        <dl>
+          <div className="stat-row">
+            <dt>Eviction protection</dt>
+            <dd data-tone={persistence === 'persisted' ? undefined : 'mark'}>
+              {persistence === null
+                ? '—'
+                : persistence === 'persisted'
+                  ? 'Granted'
+                  : persistence === 'not-persisted'
+                    ? 'Not granted'
+                    : 'Not supported'}
+            </dd>
+          </div>
+          {used && (
+            <div className="stat-row">
+              <dt>Used</dt>
+              <dd>{used}</dd>
+            </div>
+          )}
+        </dl>
+
+        {persistence !== 'persisted' && (
+          <>
+            <p className="hint">
+              Without this the browser may delete everything to reclaim space. iOS Safari
+              clears local storage after seven days without a visit unless the app is
+              installed to the home screen. There is no server, so there is nothing to
+              restore from — install it, and export regularly.
+            </p>
+            <div className="btn-row">
+              <button
+                className="btn"
+                onClick={() => void requestPersistence().then(setPersistence)}
+              >
+                Ask again
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       <section className="sheet">
