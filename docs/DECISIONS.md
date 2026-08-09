@@ -223,6 +223,43 @@ absorbs that into weekly increments is actively delaying a diagnosis.
 
 ---
 
+## 14. The Dexie schema mirrors the Zod types exactly, and stores bodyweight
+
+Seven tables — `exercises`, `templates`, `sessions`, `sets`, `weights`,
+`profile`, `plan` — each holding the engine's own type with no app-local
+wrapper. The alternative was a persistence-shaped model with a mapping layer,
+which is the standard advice and wrong here: there is one consumer, no network
+boundary, and the mapping layer's only real product would be drift between two
+descriptions of a set.
+
+The indices are the decision worth writing down, because changing them later
+means a migration:
+
+- `sessions: [templateId+date]` — "when did I last do Upper A" without a scan.
+- `sets: [exerciseId+sessionId]` — the hot path. The session screen asks for one
+  exercise's sets in one session on every keystroke.
+- `weights: &date` — **unique**. One weigh-in per calendar day, replaced rather
+  than appended, so a second reading cannot quietly skew a day.
+
+No derived column exists anywhere, per §5. There is no `systemLoad` field.
+
+**Bodyweight in a Stage 1 app** is the part that looks like scope creep and is
+not. System load is `bodyweight + belt`; without a weight the headline feature
+prints `—` forever. What is deliberately absent is everything that comes *after*
+a weight: no trend, no average, no rate, no calories. The engine owns that and
+it is Stage 3.
+
+**Also decided here:** the plan seeds the database once and is then additive
+only. A `plan.json` version bump inserts new exercises and leaves existing rows
+alone, because a rep range edited in the app is a decision and a deploy is not a
+reason to reverse it.
+
+**Reversible?** The index set, yes, at the cost of a Dexie version bump and a
+migration. The mirror-the-engine-types choice, yes but expensively — it is the
+shape of every read in the app.
+
+---
+
 <!--
 Template for new entries:
 

@@ -20,7 +20,15 @@ They ship on different schedules. Building them as one thing is the failure mode
 ## Current stage
 
 **Stage 1 — training logger.** Engine core is built and green (148 tests).
-`apps/web` is empty. Next work is Dexie schema, then the log-a-set screen.
+`apps/web` now runs: Dexie schema, plan seeding, the session screen with
+prescriptions and system load, rest timer, bodyweight entry, JSON export and
+import, and an installable PWA. It builds and deploys.
+
+Stage 1 is **not done until a full training week has been logged in it and the
+notes app stayed closed.** That is the acceptance test, and no amount of green
+CI substitutes for it. Things most likely to be found there: rest timer
+defaults, whether the exercise rail is the right way to move between lifts, and
+whether the pad's three steppers survive contact with a sweaty thumb.
 
 Stage 0 (14 days of intake + daily weights via Cronometer or MacroFactor,
 exported as CSV) has **not** been done. That CSV is the first real test fixture
@@ -30,7 +38,10 @@ collection task, not a coding task, and it runs in parallel.
 ## Rules
 
 **Do not build ahead of the current stage.** While Stage 1 is open, the word
-"calories" should not appear in a diff to `apps/web`.
+"calories" should not appear in a diff to `apps/web`. Bodyweight is the one
+piece of body data the logger stores, and only because system load is
+`bodyweight + belt` and cannot be computed without it. A weight entry is not
+permission to build a trend chart. See DECISIONS.md §14.
 
 **Engine before UI, always.** Every domain rule lands in `packages/engine` with
 a test before any component renders it. If a rule cannot be tested without a
@@ -72,13 +83,22 @@ values — all computed at read time. See DECISIONS.md §5.
 
 ```bash
 npm install
+npm run dev               # apps/web on :5173
 npm test                  # vitest, packages/engine
-npm run typecheck         # tsc --noEmit, strict
+npm run typecheck         # tsc --noEmit, strict, both workspaces
+npm run build             # static bundle in apps/web/dist
+BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
 ```
 
 ## Layout
 
 ```
+apps/web/src/
+  db/             Dexie schema, queries, JSON backup. The only place that
+                  touches IndexedDB — components never do.
+  features/       today, session, history, data
+  ui/             tokens.css, app.css
+  lib/            routing, rest timer, formatting
 packages/engine/src/
   types.ts        Zod schemas. Single source of truth. No logic.
   dates.ts        UTC calendar-date arithmetic. All date math goes here.
@@ -88,7 +108,6 @@ packages/engine/src/
   progression.ts  System load + double progression state machine
   deload.ts       Trigger detection
   volume.ts       Weekly hard-set audit per muscle
-apps/web/         React PWA. Empty. Stage 1 work lives here.
 data/plan.json    The training program as data, not code.
 docs/             ALGORITHM.md (assumptions), DECISIONS.md (ADR-lite)
 ```

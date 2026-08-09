@@ -1,0 +1,683 @@
+/*
+ * The signature is the logbook row: a printed grid you fill in left to right,
+ * completed sets struck through in pencil, and the next set already faintly
+ * pre-printed below like a form waiting to be filled. One idea, carried
+ * through every screen.
+ */
+
+/* --------------------------------------------------------------------- */
+/* Shell                                                                  */
+/* --------------------------------------------------------------------- */
+
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 0 var(--s4) calc(var(--s6) + env(safe-area-inset-bottom));
+}
+
+/*
+ * A logger that scrolls sideways under a thumb has already failed. The fix is
+ * structural — fixed table layout, no nowrap — rather than `overflow-x:
+ * hidden`, which would hide the symptom and let a column slide off the screen
+ * unnoticed.
+ */
+.app > * {
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: calc(var(--s4) + env(safe-area-inset-top)) 0 var(--s3);
+}
+
+.brand {
+  font-size: var(--step-1);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* The one flourish: the wordmark is underscored like a filled-in blank. */
+.brand::after {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-top: 2px;
+  background: var(--ink);
+}
+
+.nav {
+  display: flex;
+  gap: var(--s3);
+}
+
+.nav button {
+  font-size: var(--step-0);
+  color: var(--ink-45);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: var(--s2) 0;
+}
+
+.nav button[aria-current="page"] {
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--ink);
+}
+
+/* --------------------------------------------------------------------- */
+/* Sheet: a piece of paper laid on the graph paper                        */
+/* --------------------------------------------------------------------- */
+
+.sheet {
+  position: relative;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sheet);
+  padding: var(--s4);
+  margin-bottom: var(--s4);
+  /* A single hard offset shadow: paper on paper, not a floating card. */
+  box-shadow: 2px 2px 0 rgba(26, 24, 20, 0.06);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+  margin: 0 0 var(--s1);
+}
+
+h1 {
+  font-size: var(--step-2);
+  font-weight: 700;
+  margin: 0 0 var(--s1);
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: var(--step-1);
+  font-weight: 700;
+  margin: 0;
+}
+
+.muted {
+  color: var(--ink-45);
+}
+
+.hint {
+  color: var(--ink-45);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin: var(--s2) 0 0;
+}
+
+/* --------------------------------------------------------------------- */
+/* Today: the day list                                                    */
+/* --------------------------------------------------------------------- */
+
+.day-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--s3) 0;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+}
+
+.day-row:last-child {
+  border-bottom: none;
+}
+
+.day-row-name {
+  font-size: var(--step-1);
+  font-weight: 700;
+}
+
+.day-row-meta {
+  font-size: 0.8125rem;
+  color: var(--ink-45);
+}
+
+.day-row-go {
+  font-size: var(--step-2);
+  color: var(--ink-25);
+}
+
+.day-row[data-open="true"] .day-row-go,
+.day-row[data-open="true"] .day-row-name {
+  color: var(--mark);
+}
+
+/* --------------------------------------------------------------------- */
+/* Weigh-in strip                                                         */
+/* --------------------------------------------------------------------- */
+
+.weighin {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.weighin-value {
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.weighin-value[data-empty="true"] {
+  color: var(--ink-25);
+}
+
+/* --------------------------------------------------------------------- */
+/* Exercise rail                                                          */
+/* --------------------------------------------------------------------- */
+
+.rail {
+  display: flex;
+  gap: var(--s2);
+  overflow-x: auto;
+  padding-bottom: var(--s2);
+  margin-bottom: var(--s3);
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail-chip {
+  flex: 0 0 auto;
+  min-height: 2.5rem;
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: var(--paper-raised);
+  font-size: 0.8125rem;
+  color: var(--ink-70);
+  white-space: nowrap;
+}
+
+.rail-chip[aria-current="true"] {
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.rail-chip[data-complete="true"] {
+  color: var(--ink-25);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-25);
+}
+
+.rail-count {
+  color: var(--ink-45);
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------------- */
+/* Prescription                                                           */
+/* --------------------------------------------------------------------- */
+
+.lift-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s2);
+}
+
+.prescription {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s2);
+  font-size: var(--step-2);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.prescription-unit {
+  font-size: var(--step-0);
+  font-weight: 400;
+  color: var(--ink-45);
+}
+
+.reason {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ink-70);
+  margin: var(--s2) 0 0;
+  padding-left: var(--s3);
+  border-left: 2px solid var(--rule-strong);
+}
+
+.reason[data-outcome="stalled"] {
+  border-left-color: var(--mark);
+}
+
+.badge {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px var(--s2);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  color: var(--ink-70);
+  white-space: nowrap;
+}
+
+.badge[data-tone="mark"] {
+  border-color: var(--mark);
+  color: var(--mark);
+}
+
+/* --------------------------------------------------------------------- */
+/* The logbook grid                                                       */
+/* --------------------------------------------------------------------- */
+
+/*
+ * Fixed layout, because the columns must not resize as you fill them in. A
+ * three-digit system load appearing on set two should not shove the reps
+ * column sideways under your thumb.
+ */
+.logbook {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: var(--s3);
+}
+
+.logbook th {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+  text-align: right;
+  padding: 0 0 var(--s2);
+  border-bottom: 1px solid var(--rule-strong);
+  overflow: hidden;
+}
+
+.logbook th:first-child,
+.logbook td:first-child {
+  text-align: left;
+  width: 2rem;
+}
+
+/* The delete column is a target, not a column of data. */
+.logbook th:last-child,
+.logbook td:last-child {
+  width: 1.75rem;
+}
+
+.logbook td {
+  text-align: right;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--step-1);
+}
+
+.logbook tr:last-child td {
+  border-bottom: none;
+}
+
+/* A completed set is struck through, the way you cross off a printed row. */
+.logbook tr[data-state="done"] td {
+  color: var(--ink);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--ink-25);
+}
+
+/* The next set is already printed, faintly, waiting to be filled in. */
+.logbook tr[data-state="ghost"] td {
+  color: var(--ink-25);
+}
+
+/* The current set, and only the current set, is marked in red. */
+.logbook tr[data-state="current"] td {
+  color: var(--mark);
+  font-weight: 700;
+  background: var(--mark-soft);
+  border-bottom-color: var(--mark);
+}
+
+.logbook td.system {
+  color: var(--ink-45);
+  font-size: 0.8125rem;
+}
+
+.logbook tr[data-state="current"] td.system {
+  color: var(--mark);
+}
+
+.set-delete {
+  color: var(--ink-25);
+  padding: 0 var(--s1);
+  font-size: var(--step-1);
+}
+
+.last-session {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: 0.8125rem;
+  color: var(--ink-45);
+  margin-top: var(--s3);
+  padding-top: var(--s2);
+  border-top: 1px dashed var(--rule);
+}
+
+/* --------------------------------------------------------------------- */
+/* The pad: steppers + log button. Fixed, so nothing scrolls mid-set.     */
+/* --------------------------------------------------------------------- */
+
+.pad {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sheet);
+  padding: var(--s3);
+  margin-top: var(--s4);
+  box-shadow: 0 -6px 18px rgba(26, 24, 20, 0.06);
+}
+
+.steppers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+}
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s1);
+}
+
+.stepper-label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+}
+
+.stepper-value {
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1;
+  min-height: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.stepper-buttons {
+  display: flex;
+  gap: var(--s1);
+  width: 100%;
+}
+
+.stepper-buttons button {
+  flex: 1;
+  min-height: var(--tap);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  background: var(--paper);
+  font-size: var(--step-2);
+  color: var(--ink);
+}
+
+.stepper-buttons button:active {
+  background: var(--paper-sunk);
+}
+
+.stepper-buttons button:disabled {
+  color: var(--ink-25);
+  border-color: var(--rule);
+}
+
+.log-button {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: var(--s3);
+  border-radius: var(--r-control);
+  background: var(--mark);
+  color: var(--paper-raised);
+  font-size: var(--step-1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.log-button:active {
+  background: #a72f23;
+}
+
+.log-button:disabled {
+  background: var(--ink-25);
+}
+
+/* --------------------------------------------------------------------- */
+/* Rest timer                                                             */
+/* --------------------------------------------------------------------- */
+
+.rest {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s3);
+  padding-bottom: var(--s3);
+  margin-bottom: var(--s3);
+  border-bottom: 1px solid var(--rule);
+}
+
+.rest-clock {
+  font-size: var(--step-2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  min-width: 4.25rem;
+}
+
+.rest-clock[data-over="true"] {
+  color: var(--mark);
+}
+
+.rest-bar {
+  height: 4px;
+  background: var(--paper-sunk);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rest-bar span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transition: width 0.9s linear;
+}
+
+.rest-bar[data-over="true"] span {
+  background: var(--mark);
+}
+
+.rest-adjust {
+  display: flex;
+  gap: var(--s1);
+}
+
+.rest-adjust button {
+  min-width: 2.75rem;
+  min-height: 2.25rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  font-size: 0.8125rem;
+  color: var(--ink-70);
+}
+
+/* --------------------------------------------------------------------- */
+/* Buttons, generic                                                       */
+/* --------------------------------------------------------------------- */
+
+.btn {
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+  border: 1px solid var(--ink);
+  border-radius: var(--r-control);
+  background: var(--paper-raised);
+  font-size: var(--step-0);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.btn:active {
+  background: var(--paper-sunk);
+}
+
+.btn[data-tone="quiet"] {
+  border-color: var(--rule-strong);
+  color: var(--ink-70);
+}
+
+.btn[data-tone="danger"] {
+  border-color: var(--mark);
+  color: var(--mark);
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+
+.link-back {
+  color: var(--ink-45);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  padding: var(--s2) 0;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: var(--tap);
+  color: var(--ink-70);
+}
+
+.toggle input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--mark);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin-bottom: var(--s3);
+}
+
+.field label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+}
+
+.field input {
+  min-height: var(--tap);
+  padding: 0 var(--s3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  background: var(--paper);
+  font-size: var(--step-2);
+  font-weight: 700;
+}
+
+.notice {
+  padding: var(--s3);
+  border: 1px solid var(--rule-strong);
+  border-left: 3px solid var(--mark);
+  border-radius: var(--r-sheet);
+  background: var(--paper-raised);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin-bottom: var(--s4);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 0.875rem;
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-row dt {
+  color: var(--ink-45);
+  margin: 0;
+}
+
+.stat-row dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+dl {
+  margin: var(--s3) 0 0;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.875rem;
+}
+
+.history-row:last-child {
+  border-bottom: none;
+}
+
+.history-date {
+  color: var(--ink-45);
+}
+
+.history-sets {
+  color: var(--ink-70);
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  padding: var(--s5) 0;
+  text-align: center;
+  color: var(--ink-45);
+  font-size: 0.875rem;
+}

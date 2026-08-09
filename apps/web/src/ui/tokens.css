@@ -1,0 +1,135 @@
+/*
+ * Design tokens.
+ *
+ * Subject: a logger used one-handed, mid-set, with sweaty thumbs, in a bright
+ * gym, on a phone, in under five seconds. Printed logbooks, graph paper,
+ * pencil, plate math.
+ *
+ * Deliberately light. Not a stylistic hedge — a bright gym at midday washes out
+ * a dark screen, and the sibling project already owns dark.
+ *
+ * The red is rationed. It marks the current set and nothing else. The moment a
+ * second thing is red, the first thing stops meaning anything.
+ */
+
+:root {
+  /* Ground */
+  --paper: #f5f2ea;
+  --paper-raised: #fbf9f4;
+  --paper-sunk: #ece7db;
+
+  /* Ink */
+  --ink: #1a1814;
+  --ink-70: #4a463d;
+  --ink-45: #837d70;
+  --ink-25: #b6afa0;
+
+  /* Rule lines. Graph paper is blue-grey, printed rules are warm grey. */
+  --grid: #cfd5da;
+  --rule: #d6cfc0;
+  --rule-strong: #b3a893;
+
+  /* The one accent: a red pencil mark. Current set only. */
+  --mark: #c0392b;
+  --mark-soft: rgba(192, 57, 43, 0.1);
+
+  /* Type. No webfonts: nothing is fetched, so nothing can fail to load. */
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --step-0: 0.9375rem;
+  --step-1: 1.0625rem;
+  --step-2: 1.375rem;
+  --step-3: 2rem;
+  --step-4: 2.75rem;
+
+  /* Spacing on a 4px grid, like the paper it imitates. */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2rem;
+
+  /*
+   * Two radii, on purpose. Paper does not have rounded corners; controls do,
+   * barely. Nothing here is a pill.
+   */
+  --r-sheet: 2px;
+  --r-control: 4px;
+
+  /* The minimum a thumb can hit while breathing hard. */
+  --tap: 3.25rem;
+
+  --grid-size: 22px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--paper);
+  /*
+   * The graph-paper grid. Faint enough to read as texture rather than
+   * decoration — if you notice it while logging a set, it is too strong.
+   */
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: -1px -1px;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--step-0);
+  line-height: 1.45;
+  /* Digits must not jitter as they change under your thumb. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* The grid is texture, not content: dim it behind the sheet, don't remove it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(245, 242, 234, 0.55), rgba(245, 242, 234, 0.8));
+  pointer-events: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mark);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

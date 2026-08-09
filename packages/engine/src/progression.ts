@@ -6,7 +6,7 @@
  * 10 lb difference in real work. Every other app logs the belt number only.
  */
 import { daysBetween } from './dates.js';
-import type { Exercise, IsoDate, RepRange, SetLog, WeightEntry } from './types.js';
+import type { Exercise, IsoDate, RepRange, WeightEntry } from './types.js';
 
 /**
  * Bodyweight on a given date, from the weight log.
