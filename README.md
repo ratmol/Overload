@@ -111,8 +111,15 @@ explain a number, and a language model does not compute a TDEE.
 
 Static output, no server side, so anything that serves files will do.
 
-- **Vercel** — [`vercel.json`](vercel.json) is at the root. Import the repo and
-  accept the defaults.
+- **Vercel** — set **Root Directory to `apps/web`** and accept everything else.
+  There are two configs, one per possible root: [`apps/web/vercel.json`](apps/web/vercel.json)
+  for that setting, and [`vercel.json`](vercel.json) at the repo root for a
+  project whose root is the repository itself.
+
+  If a build ends in `No Output Directory named "dist" found`, the two disagree:
+  Vercel built inside `apps/web` and then looked for the output relative to a
+  different root. The Root Directory setting is what decides which config file
+  Vercel reads — a config in the other folder is invisible to it.
 - **GitHub Pages** — enable Settings → Pages → Source: GitHub Actions **first**,
   then run the [pages workflow](.github/workflows/pages.yml) from the Actions
   tab. It sets `BASE_PATH` to the repository name for you. It is manual-only on
