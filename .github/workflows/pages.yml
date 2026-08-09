@@ -4,12 +4,23 @@
 # from /<repo>/. On Vercel, which serves from the root, vercel.json builds the
 # same app with no BASE_PATH and it works unchanged.
 #
-# Enable once under Settings → Pages → Source: GitHub Actions.
+# MANUAL ONLY, deliberately. `actions/configure-pages` fails on a repo where
+# Pages has not been switched on, and Pages cannot be switched on from a
+# workflow — it is a one-time setting under Settings → Pages → Source: GitHub
+# Actions. A push trigger here therefore fails on every commit until somebody
+# does that by hand, and emails about it each time.
+#
+# To use it: enable Pages as above, then run this workflow from the Actions tab.
+# If you want it on every push after that, add:
+#
+#   push:
+#     branches: [main]
+#
+# Nothing else in the repo depends on this file. Vercel deploys from
+# vercel.json and does not need it.
 name: pages
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

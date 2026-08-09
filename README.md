@@ -113,9 +113,12 @@ Static output, no server side, so anything that serves files will do.
 
 - **Vercel** — [`vercel.json`](vercel.json) is at the root. Import the repo and
   accept the defaults.
-- **GitHub Pages** — enable Settings → Pages → Source: GitHub Actions. The
-  [workflow](.github/workflows/pages.yml) sets `BASE_PATH` to the repository
-  name for you.
+- **GitHub Pages** — enable Settings → Pages → Source: GitHub Actions **first**,
+  then run the [pages workflow](.github/workflows/pages.yml) from the Actions
+  tab. It sets `BASE_PATH` to the repository name for you. It is manual-only on
+  purpose: `configure-pages` fails on a repo where Pages is off, and no workflow
+  can turn Pages on, so a push trigger would fail on every commit until someone
+  flipped that switch by hand.
 - **Anywhere else** — `npm run build`, serve `apps/web/dist`. Routing is
   hash-based, so no rewrite rule is needed.
 
