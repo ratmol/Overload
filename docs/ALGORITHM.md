@@ -384,6 +384,27 @@ week late, on a dip- and pull-up-heavy program.
 Resting HR requires a **personal baseline**; an absolute bpm threshold is
 meaningless when 48 and 70 are both normal for different people.
 
+#### 5.3.1 The resting-HR baseline excludes the last 14 days
+
+`restingHrBaseline()` takes the **median** of every recorded reading **older
+than 14 days**, and returns `null` below 5 readings.
+
+The exclusion window is the whole point. A baseline computed over *all* readings
+includes the elevated ones the signal exists to detect, so it rises with them
+and the gap never reaches the 5 bpm threshold. The failure is silent and
+indistinguishable from "resting heart rate is fine" — which is the worst
+possible presentation for a signal whose value is that it fires *before*
+performance visibly drops.
+
+Median rather than mean so that one bad week — illness, a redeye, a hangover —
+does not permanently raise the number every future reading is compared against.
+A mean over the test fixture's illness week moves the baseline ~3 bpm, which is
+more than half the detection threshold.
+
+Below 5 readings there is no personal baseline, only noise, and the function
+says `null` rather than guessing one. `detectDeload` then omits the signal
+entirely instead of comparing against a fabricated number.
+
 Two-of-N rather than one-of-N because every single signal has a high
 false-positive rate on its own. One bad night is not fatigue.
 

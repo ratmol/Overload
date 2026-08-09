@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectDeload, type DeloadInputs } from '../src/deload.js';
+import { detectDeload, restingHrBaseline, type DeloadInputs } from '../src/deload.js';
 
 const base: DeloadInputs = {
   today: '2026-09-01',
@@ -157,5 +157,96 @@ describe('resting heart rate and dread', () => {
       ],
     });
     expect(r.recommend).toBe(true);
+  });
+});
+
+describe('restingHrBaseline', () => {
+  const today = '2026-09-01';
+
+  it('returns null without enough readings', () => {
+    const sessions = [
+      { date: '2026-07-01', restingHeartRateBpm: 54 },
+      { date: '2026-07-05', restingHeartRateBpm: 55 },
+    ];
+    expect(restingHrBaseline(sessions, today)).toBeNull();
+  });
+
+  it('returns null when every reading is inside the exclusion window', () => {
+    const sessions = [
+      { date: '2026-08-25', restingHeartRateBpm: 54 },
+      { date: '2026-08-26', restingHeartRateBpm: 55 },
+      { date: '2026-08-27', restingHeartRateBpm: 56 },
+      { date: '2026-08-28', restingHeartRateBpm: 57 },
+      { date: '2026-08-29', restingHeartRateBpm: 58 },
+    ];
+    expect(restingHrBaseline(sessions, today)).toBeNull();
+  });
+
+  it('takes the median of readings older than the exclusion window', () => {
+    const sessions = [
+      { date: '2026-07-01', restingHeartRateBpm: 52 },
+      { date: '2026-07-05', restingHeartRateBpm: 54 },
+      { date: '2026-07-09', restingHeartRateBpm: 55 },
+      { date: '2026-07-13', restingHeartRateBpm: 56 },
+      { date: '2026-07-17', restingHeartRateBpm: 58 },
+    ];
+    expect(restingHrBaseline(sessions, today)).toBe(55);
+  });
+
+  it('EXCLUDES the recent elevated readings it exists to detect', () => {
+    // The failure this prevents: a baseline computed over everything rises with
+    // the elevation, so the gap never reaches the threshold and the signal can
+    // never fire. Silent, and indistinguishable from "heart rate is fine".
+    const older = [
+      { date: '2026-07-01', restingHeartRateBpm: 54 },
+      { date: '2026-07-05', restingHeartRateBpm: 54 },
+      { date: '2026-07-09', restingHeartRateBpm: 55 },
+      { date: '2026-07-13', restingHeartRateBpm: 55 },
+      { date: '2026-07-17', restingHeartRateBpm: 56 },
+    ];
+    const elevated = [
+      { date: '2026-08-25', restingHeartRateBpm: 66 },
+      { date: '2026-08-27', restingHeartRateBpm: 67 },
+      { date: '2026-08-29', restingHeartRateBpm: 68 },
+    ];
+
+    const baseline = restingHrBaseline([...older, ...elevated], today);
+    expect(baseline).toBe(55);
+
+    // And with that baseline the signal actually fires.
+    const r = detectDeload({
+      ...base,
+      baselineRestingHeartRateBpm: baseline!,
+      recentSessions: elevated,
+    });
+    expect(r.signals).toContain('resting-hr-elevated');
+  });
+
+  it('is unmoved by one bad week, because it is a median', () => {
+    const sessions = [
+      { date: '2026-07-01', restingHeartRateBpm: 54 },
+      { date: '2026-07-05', restingHeartRateBpm: 55 },
+      { date: '2026-07-09', restingHeartRateBpm: 55 },
+      { date: '2026-07-13', restingHeartRateBpm: 56 },
+      // A week of illness. A mean would drag the baseline up ~3 bpm and blunt
+      // every future comparison against it.
+      { date: '2026-07-20', restingHeartRateBpm: 72 },
+      { date: '2026-07-21', restingHeartRateBpm: 74 },
+      { date: '2026-07-22', restingHeartRateBpm: 71 },
+    ];
+    expect(restingHrBaseline(sessions, today)).toBe(56);
+  });
+
+  it('ignores sessions with no reading at all', () => {
+    const sessions = [
+      { date: '2026-07-01', restingHeartRateBpm: 54 },
+      { date: '2026-07-03' },
+      { date: '2026-07-05', restingHeartRateBpm: 56 },
+      { date: '2026-07-07' },
+      { date: '2026-07-09', restingHeartRateBpm: 58 },
+      { date: '2026-07-11', restingHeartRateBpm: 60 },
+      { date: '2026-07-13', restingHeartRateBpm: 62 },
+    ];
+    expect(restingHrBaseline(sessions, today)).toBe(58);
   });
 });

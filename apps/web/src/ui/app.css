@@ -225,6 +225,11 @@ h2 {
   text-decoration-color: var(--ink-25);
 }
 
+.rail-add {
+  border-style: dashed;
+  color: var(--ink-45);
+}
+
 .rail-count {
   color: var(--ink-45);
   font-weight: 400;
@@ -336,6 +341,16 @@ h2 {
 
 .logbook tr:last-child td {
   border-bottom: none;
+}
+
+/*
+ * A warm-up is written in the margin above the working sets: present in the
+ * record, excluded from every count. Italic because nothing else here is.
+ */
+.logbook tr[data-state="warmup"] td {
+  color: var(--ink-45);
+  font-style: italic;
+  font-size: 0.875rem;
 }
 
 /* A completed set is struck through, the way you cross off a printed row. */
@@ -589,6 +604,27 @@ h2 {
   width: 1.25rem;
   height: 1.25rem;
   accent-color: var(--mark);
+}
+
+/* Inside the pad, where vertical space is the scarce thing. */
+.toggle-inline {
+  min-height: 2.5rem;
+  margin-top: var(--s2);
+  font-size: 0.8125rem;
+}
+
+.check-in-open {
+  align-self: flex-start;
+  margin-top: var(--s4);
+}
+
+.field input[type="search"] {
+  min-height: var(--tap);
+  padding: 0 var(--s3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  background: var(--paper);
+  font-size: var(--step-1);
 }
 
 .field {

@@ -19,7 +19,7 @@ import {
 import { db } from '../../db/db.js';
 import { deleteSet, logSet, performanceHistory, setsForExerciseInSession } from '../../db/queries.js';
 import { describeSets, formatSystemLoad, lb, shortDate } from '../../lib/format.js';
-import { useRestTimer } from '../../lib/useRestTimer.js';
+import type { RestTimer } from '../../lib/useRestTimer.js';
 import { RestBar } from './RestBar.js';
 import { go } from '../../lib/route.js';
 
@@ -27,6 +27,14 @@ interface PadState {
   load: number;
   reps: number;
   rir: number;
+  /**
+   * Warm-ups are logged but excluded from everything that reasons about
+   * training: the prescription, the stall detector, the volume audit. They are
+   * recorded because ramp-up loads are worth remembering week to week, and
+   * because a set you did that the log denies is how people stop trusting a
+   * logger.
+   */
+  isWarmup: boolean;
 }
 
 export function LiftSheet({
@@ -35,6 +43,7 @@ export function LiftSheet({
   date,
   isDeload,
   isLast,
+  rest,
   onFinished,
 }: {
   exercise: Exercise;
@@ -42,10 +51,18 @@ export function LiftSheet({
   date: IsoDate;
   isDeload: boolean;
   isLast: boolean;
+  /**
+   * Owned by the session, not by this component.
+   *
+   * This sheet is remounted on every lift change (it is keyed by exercise id,
+   * so the pad resets to the new prescription). A timer living here therefore
+   * died the moment you moved to the next lift — which is precisely when you
+   * are resting and looking at it.
+   */
+  rest: RestTimer;
   onFinished: () => void;
 }) {
   const [pad, setPad] = useState<PadState | null>(null);
-  const rest = useRestTimer();
 
   const data = useLiveQuery(async () => {
     const [logged, history, weights] = await Promise.all([
@@ -69,24 +86,32 @@ export function LiftSheet({
       load: lastInSession?.addedWeightLb ?? prescribed.load,
       reps: lastInSession?.reps ?? prescribed.targetReps[1],
       rir: lastInSession?.rir ?? 2,
+      isWarmup: false,
     });
   }, [pad, prescribed, data]);
 
   if (!data || !prescribed || !pad) return <div className="empty">…</div>;
 
   const working = data.logged.filter((s) => !s.isWarmup);
+  const warmups = data.logged.filter((s) => s.isWarmup);
   const remaining = Math.max(0, prescribed.sets - working.length);
   const last = data.history.at(-1);
   const complete = remaining === 0;
 
   async function onLog() {
+    const wasWarmup = pad!.isWarmup;
     await logSet({
       sessionId,
       exerciseId: exercise.id,
       addedWeightLb: pad!.load,
       reps: pad!.reps,
       rir: pad!.rir,
+      isWarmup: wasWarmup,
     });
+    // Logging a warm-up flips back to working sets, because you ramp up once
+    // and then work. Leaving the toggle on is how a whole session gets logged
+    // as warm-ups and silently vanishes from the volume audit.
+    if (wasWarmup) setPad((p) => ({ ...p!, isWarmup: false }));
     rest.start();
   }
 
@@ -128,6 +153,27 @@ export function LiftSheet({
             </tr>
           </thead>
           <tbody>
+            {/* Warm-ups sit above the working sets and are numbered W, because
+                they happened first and count for nothing. */}
+            {warmups.map((s, i) => (
+              <tr key={s.id} data-state="warmup">
+                <td>W{i + 1}</td>
+                <td>{lb(s.addedWeightLb)}</td>
+                <td>{s.reps}</td>
+                <td>—</td>
+                {exercise.isBodyweightLoaded && <td className="system" />}
+                <td>
+                  <button
+                    className="set-delete"
+                    aria-label={`Delete warm-up ${i + 1}`}
+                    onClick={() => void deleteSet(s.id)}
+                  >
+                    ×
+                  </button>
+                </td>
+              </tr>
+            ))}
+
             {working.map((s, i) => (
               <tr key={s.id} data-state="done">
                 <td>{i + 1}</td>
@@ -157,10 +203,10 @@ export function LiftSheet({
               happily log a fifth set and the row should agree with the button.
             */}
             <tr data-state="current">
-              <td>{working.length + 1}</td>
+              <td>{pad.isWarmup ? `W${warmups.length + 1}` : working.length + 1}</td>
               <td>{lb(pad.load)}</td>
               <td>{pad.reps}</td>
-              <td>{pad.rir}</td>
+              <td>{pad.isWarmup ? '—' : pad.rir}</td>
               {exercise.isBodyweightLoaded && (
                 <td className="system">
                   {formatSystemLoad(systemLoad(exercise, pad.load, data.bodyweight))}
@@ -226,19 +272,29 @@ export function LiftSheet({
           />
           <Stepper
             label="RIR"
-            value={String(pad.rir)}
+            value={pad.isWarmup ? '—' : String(pad.rir)}
             onDown={() => step({ rir: Math.max(0, pad.rir - 1) })}
             onUp={() => step({ rir: Math.min(10, pad.rir + 1) })}
-            downDisabled={pad.rir <= 0}
+            downDisabled={pad.isWarmup || pad.rir <= 0}
+            upDisabled={pad.isWarmup}
           />
         </div>
+
+        <label className="toggle toggle-inline">
+          <input
+            type="checkbox"
+            checked={pad.isWarmup}
+            onChange={(e) => step({ isWarmup: e.target.checked })}
+          />
+          Warm-up — logged, but counts toward nothing
+        </label>
 
         {/*
           Once the prescribed sets are in, the next action is the next lift, not
           another set. Logging an extra one stays available and stays one tap —
           it is just no longer the thing the thumb lands on by default.
         */}
-        {complete ? (
+        {complete && !pad.isWarmup ? (
           <>
             <button className="log-button" onClick={onFinished}>
               {isLast ? 'Finish session' : 'Next lift →'}
@@ -251,7 +307,7 @@ export function LiftSheet({
           </>
         ) : (
           <button className="log-button" onClick={() => void onLog()}>
-            Log set {working.length + 1}
+            {pad.isWarmup ? `Log warm-up ${warmups.length + 1}` : `Log set ${working.length + 1}`}
           </button>
         )}
       </section>
@@ -265,12 +321,14 @@ function Stepper({
   onDown,
   onUp,
   downDisabled,
+  upDisabled = false,
 }: {
   label: string;
   value: string;
   onDown: () => void;
   onUp: () => void;
   downDisabled: boolean;
+  upDisabled?: boolean;
 }) {
   return (
     <div className="stepper">
@@ -282,7 +340,7 @@ function Stepper({
         <button onClick={onDown} disabled={downDisabled} aria-label={`${label} down`}>
           −
         </button>
-        <button onClick={onUp} aria-label={`${label} up`}>
+        <button onClick={onUp} disabled={upDisabled} aria-label={`${label} up`}>
           +
         </button>
       </div>

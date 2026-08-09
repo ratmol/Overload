@@ -46,7 +46,12 @@ export async function startSession(
 
 export async function setSessionFlags(
   sessionId: string,
-  patch: Partial<Pick<Session, 'isDeload' | 'sleepQuality' | 'jointPainFlag' | 'dreadFlag'>>,
+  patch: Partial<
+    Pick<
+      Session,
+      'isDeload' | 'sleepQuality' | 'jointPainFlag' | 'dreadFlag' | 'restingHeartRateBpm'
+    >
+  >,
 ): Promise<void> {
   await db.sessions.update(sessionId, patch);
 }

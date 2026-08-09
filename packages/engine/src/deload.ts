@@ -6,7 +6,7 @@
  * signal has a high false-positive rate: one bad night's sleep is not fatigue,
  * and one stalled lift is often just a bad session.
  */
-import { daysBetween } from './dates.js';
+import { daysBetween, median } from './dates.js';
 import type { IsoDate, Session } from './types.js';
 
 export type DeloadSignal =
@@ -67,6 +67,55 @@ export interface DeloadRecommendation {
   recommend: boolean;
   signals: DeloadSignal[];
   reason: string;
+}
+
+export interface RestingHrBaselineOptions {
+  /**
+   * Readings this recent are excluded from the baseline.
+   *
+   * This is the whole point of the function. A baseline computed over ALL
+   * readings includes the elevated ones you are trying to detect, so it rises
+   * with them and the signal can never fire — the failure mode is silent, and
+   * it looks exactly like "my heart rate is fine".
+   */
+  excludeRecentDays: number;
+  /** Below this many readings there is no personal baseline, only noise. */
+  minReadings: number;
+}
+
+export const DEFAULT_RESTING_HR_BASELINE_OPTIONS: RestingHrBaselineOptions = {
+  excludeRecentDays: 14,
+  minReadings: 5,
+};
+
+/**
+ * A personal resting heart rate baseline, in bpm, or null when there is not
+ * enough history to have one.
+ *
+ * Median rather than mean: one bad week — illness, a redeye, a hangover —
+ * should not move the number every subsequent reading is compared against.
+ *
+ * An absolute threshold is not usable here. A 48 bpm endurance athlete and a
+ * 70 bpm average adult are both entirely normal, so the only meaningful
+ * question is how far today sits above this particular person's own resting
+ * rate.
+ */
+export function restingHrBaseline(
+  sessions: readonly Pick<Session, 'date' | 'restingHeartRateBpm'>[],
+  today: IsoDate,
+  options: Partial<RestingHrBaselineOptions> = {},
+): number | null {
+  const o = { ...DEFAULT_RESTING_HR_BASELINE_OPTIONS, ...options };
+  const readings = sessions
+    .filter((s) => s.restingHeartRateBpm !== undefined)
+    .filter((s) => {
+      const age = daysBetween(s.date, today);
+      return age >= o.excludeRecentDays;
+    })
+    .map((s) => s.restingHeartRateBpm!);
+
+  if (readings.length < o.minReadings) return null;
+  return median(readings);
 }
 
 export function detectDeload(

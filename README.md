@@ -64,9 +64,18 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
   the one you can see moving.
 - **Rest timer** driven by wall-clock time, so a phone locked in a pocket does
   not come back thirty seconds slow.
+- **Warm-ups logged but counted nowhere** — excluded from the prescription, the
+  stall detector and the volume audit. A set you did that the log denies is how
+  people stop trusting a logger.
+- **Substitute a lift** when the rack is taken. The substitute carries its own
+  history, so progression picks up where that exercise was last left off.
 - **Deload** as a toggle: halves the sets, drops to ~87.5%, strips the belt from
   bodyweight-loaded lifts. A banner suggests one when the schedule expires or
-  two independent fatigue signals appear.
+  two independent fatigue signals appear. A four-tap check-in — sleep, joints,
+  resting heart rate, dread — feeds the signals that fire *before* performance
+  drops. The heart-rate baseline is derived from your own history, excluding the
+  last two weeks, because a baseline that includes the elevation it is looking
+  for can never detect it.
 - **JSON export and import.** There is no server, so the export file is the only
   backup that exists, and it round-trips through the same Zod schemas the engine
   uses.

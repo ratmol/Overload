@@ -10,6 +10,7 @@ import {
   daysBetween,
   detectDeload,
   isStalled,
+  restingHrBaseline,
   rirDriftAtConstantLoad,
   type IsoDate,
   type Session,
@@ -60,6 +61,12 @@ export function DeloadNotice({
       if (drift !== null && (worstDrift === null || drift < worstDrift)) worstDrift = drift;
     }
 
+    // Derived from the log rather than asked for. The baseline deliberately
+    // excludes the last two weeks — including the elevated readings you are
+    // trying to detect would raise the baseline with them and the signal could
+    // never fire.
+    const baseline = restingHrBaseline(sessions, today);
+
     return detectDeload({
       today,
       blockStartDate,
@@ -67,6 +74,7 @@ export function DeloadNotice({
       stalledExerciseIds,
       rirDriftPerSession: worstDrift,
       recentSessions: sessions.filter((s) => daysBetween(s.date, today) <= 21),
+      ...(baseline === null ? {} : { baselineRestingHeartRateBpm: baseline }),
     });
   }, [today, sessions]);
 
