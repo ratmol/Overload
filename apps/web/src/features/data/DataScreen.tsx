@@ -18,6 +18,7 @@ export function DataScreen() {
     sessions: await db.sessions.count(),
     sets: await db.sets.count(),
     weights: await db.weights.count(),
+    intake: await db.intake.count(),
     exercises: await db.exercises.count(),
   }));
 
@@ -38,7 +39,9 @@ export function DataScreen() {
       if (!ok) return;
       const result: ImportResult = await importAll(parsed);
       setMessage(
-        `Imported ${result.sessions} sessions, ${result.sets} sets, ${result.weights} weigh-ins.`,
+        `Imported ${result.sessions} sessions, ${result.sets} sets, ${result.weights} weigh-ins, ` +
+          `${result.intake} intake rows.` +
+          (result.format < 2 ? ' (Older backup format — it had no calorie data.)' : ''),
       );
     } catch (err) {
       // Nothing was written: importAll validates the whole file before the
@@ -48,13 +51,27 @@ export function DataScreen() {
   }
 
   async function onErase() {
-    if (!window.confirm('Delete every session, set and weigh-in on this device? No undo.')) return;
-    await db.transaction('rw', db.sessions, db.sets, db.weights, async () => {
-      await db.sessions.clear();
-      await db.sets.clear();
-      await db.weights.clear();
-    });
-    setMessage('Training history erased. The program itself is still here.');
+    if (
+      !window.confirm(
+        'Delete every session, set, weigh-in and intake row on this device? No undo.',
+      )
+    ) {
+      return;
+    }
+    await db.transaction(
+      'rw',
+      [db.sessions, db.sets, db.weights, db.intake, db.adjustments],
+      async () => {
+        await db.sessions.clear();
+        await db.sets.clear();
+        await db.weights.clear();
+        await db.intake.clear();
+        await db.adjustments.clear();
+      },
+    );
+    // The profile and the target survive: they are settings, not history, and
+    // erasing them would silently switch the calorie side back off.
+    setMessage('History erased. The program, your profile and your target are still here.');
   }
 
   return (
@@ -80,6 +97,10 @@ export function DataScreen() {
           <div className="stat-row">
             <dt>Weigh-ins</dt>
             <dd>{counts?.weights ?? '—'}</dd>
+          </div>
+          <div className="stat-row">
+            <dt>Intake rows</dt>
+            <dd>{counts?.intake ?? '—'}</dd>
           </div>
           <div className="stat-row">
             <dt>Exercises in program</dt>

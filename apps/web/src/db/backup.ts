@@ -7,10 +7,16 @@
  * engine's Zod schemas on the way back in — the same schemas that guard the
  * engine — so a hand-edited or truncated file is rejected whole rather than
  * applied halfway.
+ *
+ * Format 2 added the calorie tables. Format 1 files still import: an old
+ * backup is exactly the situation a backup exists for, and refusing to read one
+ * because the app moved on would defeat the point.
  */
 import { z } from 'zod';
 import {
+  Adjustment,
   Exercise,
+  IntakeEntry,
   Session,
   SessionTemplate,
   SetLog,
@@ -19,12 +25,20 @@ import {
 } from '@overload/engine';
 import { db } from './db.js';
 
-export const BACKUP_FORMAT = 1;
+export const BACKUP_FORMAT = 2;
 
-const Backup = z.object({
-  format: z.literal(BACKUP_FORMAT),
-  exportedAt: z.string(),
+const TargetStateSchema = z.object({
+  id: z.literal('current'),
+  currentKcal: z.number().positive(),
+  baselineKcal: z.number().positive(),
+  lastAdjustmentDate: z.string().nullable(),
+  consecutiveUnresponsive: z.number().int().nonnegative(),
+});
+
+/** Everything present in format 1. */
+const TrainingTables = z.object({
   app: z.literal('overload'),
+  exportedAt: z.string(),
   exercises: z.array(Exercise),
   templates: z.array(SessionTemplate),
   sessions: z.array(Session),
@@ -32,17 +46,39 @@ const Backup = z.object({
   weights: z.array(WeightEntry),
   profile: z.array(UserProfile),
 });
-export type Backup = z.infer<typeof Backup>;
+
+const BackupV1 = TrainingTables.extend({ format: z.literal(1) });
+
+const BackupV2 = TrainingTables.extend({
+  format: z.literal(2),
+  intake: z.array(IntakeEntry),
+  adjustments: z.array(Adjustment),
+  target: z.array(TargetStateSchema),
+});
+
+const AnyBackup = z.union([BackupV2, BackupV1]);
+
+export type Backup = z.infer<typeof BackupV2>;
+
+/** Fills in the tables a format 1 file predates. */
+function upgrade(raw: z.infer<typeof AnyBackup>): Backup {
+  if (raw.format === 2) return raw;
+  return { ...raw, format: 2, intake: [], adjustments: [], target: [] };
+}
 
 export async function exportAll(): Promise<Backup> {
-  const [exercises, templates, sessions, sets, weights, profile] = await Promise.all([
-    db.exercises.toArray(),
-    db.templates.toArray(),
-    db.sessions.toArray(),
-    db.sets.toArray(),
-    db.weights.toArray(),
-    db.profile.toArray(),
-  ]);
+  const [exercises, templates, sessions, sets, weights, profile, intake, adjustments, target] =
+    await Promise.all([
+      db.exercises.toArray(),
+      db.templates.toArray(),
+      db.sessions.toArray(),
+      db.sets.toArray(),
+      db.weights.toArray(),
+      db.profile.toArray(),
+      db.intake.toArray(),
+      db.adjustments.toArray(),
+      db.target.toArray(),
+    ]);
   return {
     format: BACKUP_FORMAT,
     app: 'overload',
@@ -53,6 +89,9 @@ export async function exportAll(): Promise<Backup> {
     sets,
     weights,
     profile,
+    intake,
+    adjustments,
+    target,
   };
 }
 
@@ -67,11 +106,14 @@ export function downloadBackup(backup: Backup): void {
 }
 
 export interface ImportResult {
+  format: number;
   exercises: number;
   templates: number;
   sessions: number;
   sets: number;
   weights: number;
+  intake: number;
+  adjustments: number;
 }
 
 /**
@@ -82,10 +124,22 @@ export interface ImportResult {
  * version of it. The caller confirms first.
  */
 export async function importAll(raw: unknown): Promise<ImportResult> {
-  const backup = Backup.parse(raw);
+  const parsed = AnyBackup.parse(raw);
+  const backup = upgrade(parsed);
+
   await db.transaction(
     'rw',
-    [db.exercises, db.templates, db.sessions, db.sets, db.weights, db.profile],
+    [
+      db.exercises,
+      db.templates,
+      db.sessions,
+      db.sets,
+      db.weights,
+      db.profile,
+      db.intake,
+      db.adjustments,
+      db.target,
+    ],
     async () => {
       await Promise.all([
         db.exercises.clear(),
@@ -94,6 +148,9 @@ export async function importAll(raw: unknown): Promise<ImportResult> {
         db.sets.clear(),
         db.weights.clear(),
         db.profile.clear(),
+        db.intake.clear(),
+        db.adjustments.clear(),
+        db.target.clear(),
       ]);
       await db.exercises.bulkAdd(backup.exercises);
       await db.templates.bulkAdd(backup.templates);
@@ -101,13 +158,20 @@ export async function importAll(raw: unknown): Promise<ImportResult> {
       await db.sets.bulkAdd(backup.sets);
       await db.weights.bulkAdd(backup.weights);
       await db.profile.bulkAdd(backup.profile);
+      await db.intake.bulkAdd(backup.intake);
+      await db.adjustments.bulkAdd(backup.adjustments);
+      await db.target.bulkAdd(backup.target);
     },
   );
+
   return {
+    format: parsed.format,
     exercises: backup.exercises.length,
     templates: backup.templates.length,
     sessions: backup.sessions.length,
     sets: backup.sets.length,
     weights: backup.weights.length,
+    intake: backup.intake.length,
+    adjustments: backup.adjustments.length,
   };
 }

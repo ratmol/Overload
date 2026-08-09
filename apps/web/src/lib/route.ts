@@ -13,7 +13,13 @@ export type Route =
   | { name: 'today' }
   | { name: 'session'; templateId: string; date: IsoDate }
   | { name: 'history'; exerciseId: string }
+  | { name: 'volume' }
+  | { name: 'body' }
+  | { name: 'intake' }
+  | { name: 'setup' }
   | { name: 'data' };
+
+const SIMPLE = ['volume', 'body', 'intake', 'setup', 'data'] as const;
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -21,7 +27,8 @@ export function parseRoute(hash: string): Route {
     return { name: 'session', templateId: parts[1], date: parts[2] };
   }
   if (parts[0] === 'history' && parts[1]) return { name: 'history', exerciseId: parts[1] };
-  if (parts[0] === 'data') return { name: 'data' };
+  const simple = SIMPLE.find((name) => name === parts[0]);
+  if (simple) return { name: simple };
   return { name: 'today' };
 }
 

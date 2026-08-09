@@ -19,29 +19,40 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 1 — training logger.** Engine core is built and green (148 tests).
-`apps/web` now runs: Dexie schema, plan seeding, the session screen with
-prescriptions and system load, rest timer, bodyweight entry, JSON export and
-import, and an installable PWA. It builds and deploys.
+**Stage 3 — engine wired into the app.** Both halves are built. 168 tests
+(148 engine, 20 CSV import). The app has the training logger, the weight trend,
+estimated expenditure with confidence, the target with proposals, intake import
+and the weekly volume audit.
 
-Stage 1 is **not done until a full training week has been logged in it and the
-notes app stayed closed.** That is the acceptance test, and no amount of green
-CI substitutes for it. Things most likely to be found there: rest timer
-defaults, whether the exercise rail is the right way to move between lifts, and
-whether the pad's three steppers survive contact with a sweaty thumb.
+**Two acceptance tests are still open, and neither is a coding task:**
 
-Stage 0 (14 days of intake + daily weights via Cronometer or MacroFactor,
-exported as CSV) has **not** been done. That CSV is the first real test fixture
-and the engine cannot be validated against reality without it. It is a data-
-collection task, not a coding task, and it runs in parallel.
+- **Stage 1:** a full training week logged in the app with the notes app closed.
+  Most likely to surface: rest timer defaults, whether the exercise rail is the
+  right way to move between lifts, whether the pad survives a sweaty thumb.
+- **Stage 0:** 14 days of real intake and daily weights, exported as CSV. The
+  engine has never been run against real data. Every number it currently
+  produces has been checked only against synthetic fixtures, which were written
+  by the same person who wrote the code — that is a consistency check, not a
+  validation.
+
+Until Stage 0 lands, treat the calorie side as unvalidated regardless of how
+confident the confidence model sounds.
 
 ## Rules
 
-**Do not build ahead of the current stage.** While Stage 1 is open, the word
-"calories" should not appear in a diff to `apps/web`. Bodyweight is the one
-piece of body data the logger stores, and only because system load is
-`bodyweight + belt` and cannot be computed without it. A weight entry is not
-permission to build a trend chart. See DECISIONS.md §14.
+**Build only what the current stage needs.** The stage gate is now the two open
+acceptance tests above, not a feature list. The app is ahead of its evidence:
+nothing further should be added to the calorie side until real data has been
+through it. Stage 4 (in-app food logging, barcode scanning) remains out.
+
+**Engine before UI, always.** Every domain rule lands in `packages/engine` with
+a test before any component renders it. If a rule cannot be tested without a
+browser, it is in the wrong place. `apps/web/test` exists for the one thing that
+is neither UI nor domain rule — reading someone else's CSV export.
+
+**No number without a reason.** Every figure the app prints comes with the
+engine's own reason string. If a component computes a figure itself, or renders
+one the engine could not explain, that is a bug. See DECISIONS.md §15.
 
 **Engine before UI, always.** Every domain rule lands in `packages/engine` with
 a test before any component renders it. If a rule cannot be tested without a
@@ -84,7 +95,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, packages/engine
+npm test                  # vitest, both workspaces (148 engine + 20 web)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -94,11 +105,12 @@ BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
 
 ```
 apps/web/src/
-  db/             Dexie schema, queries, JSON backup. The only place that
-                  touches IndexedDB — components never do.
-  features/       today, session, history, data
+  db/             Dexie schema, queries, nutrition reads, JSON backup. The only
+                  place that touches IndexedDB — components never do.
+  features/       today, session, history, volume, body, data
   ui/             tokens.css, app.css
-  lib/            routing, rest timer, formatting
+  lib/            routing, rest timer, formatting, CSV import
+apps/web/test/    csv.test.ts. The only app code worth testing.
 packages/engine/src/
   types.ts        Zod schemas. Single source of truth. No logic.
   dates.ts        UTC calendar-date arithmetic. All date math goes here.

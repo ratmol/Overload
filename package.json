@@ -12,7 +12,7 @@
     "dev": "npm run dev --workspace @overload/web",
     "build": "npm run build --workspace @overload/web",
     "preview": "npm run preview --workspace @overload/web",
-    "test": "npm run test --workspace @overload/engine",
+    "test": "npm run test --workspace @overload/engine && npm run test --workspace @overload/web",
     "typecheck": "tsc --noEmit -p packages/engine/tsconfig.json && tsc --noEmit -p apps/web/tsconfig.json"
   },
   "devDependencies": {

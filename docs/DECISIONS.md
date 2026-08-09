@@ -260,6 +260,48 @@ shape of every read in the app.
 
 ---
 
+## 15. The engine proposes; the user accepts. Nothing auto-applies
+
+`adjustTarget` runs on every render of the dashboard, but its output is a
+proposal with an Accept button, never a write. The alternatives were auto-apply
+(what MacroFactor does) and a weekly prompt.
+
+The reason is the product's one real claim: it explains every number before it
+changes anything. A change applied while you slept cannot have been read first,
+so auto-apply would quietly delete the feature the whole engine exists to
+provide. It also makes the block states legible — "not confident enough,
+because X" is shown with the same prominence as a proposal, because the engine
+declining to act *is* the product working.
+
+**Cost:** a proposal can sit unaccepted, so `currentTarget` may lag what the
+engine thinks. Accepted: an ignored proposal is a valid answer, and the engine
+re-makes the case whenever it has grounds to.
+
+**Also decided here:**
+
+- **Import replaces per-date, never appends.** Re-exporting the last 90 days
+  every time is the normal case. Appending would double every day in the
+  overlap, which doubles mean intake and moves estimated expenditure by roughly
+  a thousand calories. Per-date replacement is the only version that is safe to
+  run twice.
+- **Cronometer's per-food rows are kept, not summed.** `estimateTdee` already
+  aggregates to daily totals and documents that multiple rows per day are legal.
+  Summing at import would discard detail and create a second implementation of
+  the same arithmetic to disagree with.
+- **Ambiguous dates are rejected, not guessed.** `03/04/2026` is March 4th to
+  one exporter and April 3rd to another. Guessing shifts a month of intake onto
+  the wrong days and the resulting TDEE still looks entirely reasonable, which
+  is what makes it dangerous.
+- **A manual target change resets the baseline.** The baseline exists to measure
+  how far the *engine* has walked the number; counting a user's own decision as
+  drift would push it toward the needs-review escalation for something nobody
+  got wrong.
+
+**Reversible?** Yes, all of it. The import rules are the expensive ones to
+change after data exists.
+
+---
+
 <!--
 Template for new entries:
 

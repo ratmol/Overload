@@ -5,21 +5,28 @@ calorie engine that explains every number it produces.
 
 No server. No account. No sync. Your data stays in your browser.
 
-**Status:** the engine is built and tested (148 tests). The training logger runs
-and installs as a PWA. The calorie side is not wired into the app yet.
+**Status:** both halves are built and wired together. 168 tests. The app logs
+training, tracks the weight trend, estimates expenditure with an explicit
+confidence level, and proposes calorie changes with a written reason for each
+one.
+
+**What has not happened yet:** none of it has been run against real data. Every
+number has been checked against synthetic fixtures written by the same person
+who wrote the code, which is a consistency check rather than a validation. Read
+the confidence model as a description of the engine's own opinion, not evidence.
 
 | | |
 |---|---|
 | [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 148 tests. **Start here.** |
-| [`apps/web`](apps/web) | React PWA. The training logger. |
+| [`apps/web`](apps/web) | React PWA. The logger and the dashboard. |
 | [`data/plan.json`](data/plan.json) | The training program as data, not code. |
 | [`docs/ALGORITHM.md`](docs/ALGORITHM.md) | Every constant and the assumption behind it. |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Irreversible calls and what they cost. |
 
 ```bash
 npm install
-npm run dev        # the logger, on :5173
-npm test           # the engine
+npm run dev        # the app, on :5173
+npm test           # 148 engine + 20 CSV-import tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -67,6 +74,29 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
 Everything derived — system load, prescriptions, weekly volume — is computed at
 read time and never stored. A corrected bodyweight fixes every system load that
 depended on it.
+
+## The body side
+
+- **Weight trend**, drawn by hand in SVG. The trend is the only continuous line
+  on the chart, because a smooth curve through raw scale readings is exactly the
+  false precision the EWMA exists to avoid. Downweighted outliers are drawn
+  hollow — visibly still there, never deleted.
+- **Estimated expenditure** as a range with a confidence level and the sentence
+  explaining why the confidence landed where it did. During the first eight
+  weeks it says "the trend has not settled" and refuses to act, because an
+  EWMA understates the rate of gain early and the naive response — adding
+  calories — is precisely backwards in month one.
+- **A calorie target the engine proposes and you accept.** Nothing applies
+  automatically. Blocks are shown as prominently as proposals: "not confident
+  enough, because X" is the product working, not an error state.
+- **Intake by CSV import** from Cronometer or MacroFactor, or by hand. Days are
+  tagged shift or off, since a standing shift plausibly costs 300-500 kcal more
+  than a rest day and one flat number means a surplus on half of them.
+- **Weekly volume audit** against the plan's per-muscle targets, counting hard
+  sets only (RIR ≤ 4) and secondaries at half.
+
+No food database, no barcode scanner, no AI coach. The engine's job is to
+explain a number, and a language model does not compute a TDEE.
 
 ## Deploying it
 

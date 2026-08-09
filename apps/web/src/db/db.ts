@@ -12,7 +12,9 @@
  */
 import Dexie, { type Table } from 'dexie';
 import type {
+  Adjustment,
   Exercise,
+  IntakeEntry,
   Session,
   SessionTemplate,
   SetLog,
@@ -41,6 +43,28 @@ export interface PlanMeta {
   seededAt: string;
 }
 
+/**
+ * The calorie target as it stands right now, plus the baseline it started from.
+ *
+ * The baseline is stored because `adjustTarget` needs it to detect cumulative
+ * drift — the case where the engine has walked the target 300 kcal across
+ * several cycles and the weight trend still has not responded, which is where
+ * it stops adjusting and points at a blood panel instead.
+ */
+export interface TargetState {
+  id: 'current';
+  currentKcal: number;
+  baselineKcal: number;
+  /** Set when the user accepts a proposal. Drives the 14-day cooldown. */
+  lastAdjustmentDate: string | null;
+  /**
+   * Adjustments in a row that pushed the same way without the trend moving.
+   * Incremented when a proposal is accepted in the same direction as the last
+   * one and the observed rate has not come back inside the band.
+   */
+  consecutiveUnresponsive: number;
+}
+
 export class OverloadDb extends Dexie {
   exercises!: Table<Exercise, string>;
   templates!: Table<SessionTemplate, string>;
@@ -49,6 +73,9 @@ export class OverloadDb extends Dexie {
   weights!: Table<WeightEntry, string>;
   profile!: Table<UserProfile, string>;
   plan!: Table<PlanMeta, string>;
+  intake!: Table<IntakeEntry, string>;
+  adjustments!: Table<Adjustment, string>;
+  target!: Table<TargetState, string>;
 
   constructor() {
     super('overload');
@@ -66,6 +93,18 @@ export class OverloadDb extends Dexie {
       weights: 'id, &date',
       profile: 'id',
       plan: 'id',
+    });
+
+    // v2 adds the calorie side. Purely additive — no existing table changes
+    // shape, so v1 data upgrades with no migration function.
+    this.version(2).stores({
+      // `&date` is NOT unique here, unlike weights: MacroFactor exports one row
+      // per day but Cronometer exports one row per food, and collapsing those
+      // at import would throw away the detail. estimateTdee aggregates to daily
+      // totals itself, precisely because multiple rows per day are legal.
+      intake: 'id, date, activityTag',
+      adjustments: 'id, date',
+      target: 'id',
     });
   }
 }
