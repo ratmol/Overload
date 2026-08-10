@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   bodyweightOn,
   deloadPrescription,
+  DELOAD_RIR,
   isStalled,
   nextPrescription,
   rirDriftAtConstantLoad,
+  rirLadder,
   systemLoad,
   type SessionPerformance,
 } from '../src/progression.js';
@@ -219,6 +221,7 @@ describe('deloadPrescription', () => {
       load: 45,
       targetReps: [5, 8],
       sets: 4,
+      rirBySet: [2, 2, 2, 1],
       reason: '',
     });
     expect(d.load).toBe(0);
@@ -230,6 +233,7 @@ describe('deloadPrescription', () => {
       load: 135,
       targetReps: [8, 12],
       sets: 4,
+      rirBySet: [2, 2, 2, 1],
       reason: '',
     });
     expect(d.load).toBeCloseTo(117.5, 1);
@@ -237,7 +241,57 @@ describe('deloadPrescription', () => {
   });
 
   it('never drops below one set', () => {
-    const d = deloadPrescription(bench, { load: 100, targetReps: [8, 12], sets: 1, reason: '' });
+    const d = deloadPrescription(bench, { load: 100, targetReps: [8, 12], sets: 1, rirBySet: [1], reason: '' });
     expect(d.sets).toBe(1);
+  });
+});
+
+
+describe('the RIR ladder', () => {
+  const ladderLift: Exercise = {
+    ...bench,
+    id: 'ladder',
+    defaultSets: 3,
+    // Program v2's core idea: only the last set is hard on a systemic compound.
+    targetRirBySet: [2, 2, 1],
+  };
+
+  it('expands the ladder to exactly one entry per prescribed set', () => {
+    expect(nextPrescription(ladderLift, []).rirBySet).toEqual([2, 2, 1]);
+  });
+
+  it('repeats the last rung when there are more sets than rungs', () => {
+    // Without this a fourth set would get `undefined` and the UI would have to
+    // invent a meaning for it.
+    expect(rirLadder({ ...ladderLift, defaultSets: 5 }, 5)).toEqual([2, 2, 1, 1, 1]);
+  });
+
+  it('falls back for an exercise with no ladder, which is every v1 exercise', () => {
+    expect(nextPrescription(bench, []).rirBySet).toEqual([2, 2, 2, 2]);
+  });
+
+  it('expresses true failure on every set', () => {
+    const laterals: Exercise = { ...bench, id: 'lat', defaultSets: 4, targetRirBySet: [0] };
+    expect(nextPrescription(laterals, []).rirBySet).toEqual([0, 0, 0, 0]);
+  });
+
+  it('carries the ladder through a load advance', () => {
+    const history = [
+      { date: '2026-08-01', sets: [[135, 12, 1], [135, 12, 1], [135, 12, 1]] },
+    ].map((h) => ({
+      date: h.date,
+      sets: h.sets.map(([addedWeightLb, reps, rir]) => ({ addedWeightLb: addedWeightLb!, reps: reps!, rir: rir! })),
+    }));
+    const p = nextPrescription(ladderLift, history);
+    expect(p.outcome).toBe('advance-load');
+    expect(p.rirBySet).toEqual([2, 2, 1]);
+  });
+
+  it('OVERRIDES the ladder on a deload, including true-failure exercises', () => {
+    // A deload that still demanded failure on lateral raises would not be a
+    // deload. "Stop 4-5 reps short" beats whatever the ladder says.
+    const laterals: Exercise = { ...bench, id: 'lat', defaultSets: 4, targetRirBySet: [0] };
+    const normal = nextPrescription(laterals, []);
+    expect(deloadPrescription(laterals, normal).rirBySet).toEqual([DELOAD_RIR, DELOAD_RIR]);
   });
 });

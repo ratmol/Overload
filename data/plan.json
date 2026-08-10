@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "name": "Upper/Lower 4-day \u2014 lean gain block, Aug 2026",
+  "version": 2,
+  "name": "Upper/Lower 4-day — program v2, 45 minutes, lean gain block",
   "deloadEveryWeeks": 6,
   "exercises": [
     {
@@ -30,9 +30,16 @@
         6,
         8
       ],
-      "defaultSets": 4,
+      "defaultSets": 3,
       "startingLoadLb": 50,
-      "notes": "Per-hand load. Lighter than previous 60x4-6 on purpose: rep-range shift out of 3-6."
+      "notes": "Per-hand load. Lighter than previous 60x4-6 on purpose: rep-range shift out of 3-6.",
+      "targetRirBySet": [
+        2,
+        2,
+        1
+      ],
+      "restSeconds": 90,
+      "supersetGroup": "A"
     },
     {
       "id": "weighted-pullup",
@@ -57,10 +64,17 @@
         5,
         8
       ],
-      "defaultSets": 4,
+      "defaultSets": 3,
       "startingLoadLb": 30,
-      "notes": "Belt weight only. System load = bodyweight + belt. 5 lb is a ~4% jump at 132 lb BW, so increment is 2.5.",
-      "entryStandardReps": 10
+      "notes": "Belt weight only. System load = bodyweight + belt. 5 lb is a ~4% jump at 132 lb BW, so the increment is 2.5.",
+      "entryStandardReps": 10,
+      "targetRirBySet": [
+        2,
+        2,
+        1
+      ],
+      "restSeconds": 90,
+      "supersetGroup": "A"
     },
     {
       "id": "weighted-dip",
@@ -85,10 +99,15 @@
         6,
         10
       ],
-      "defaultSets": 3,
+      "defaultSets": 2,
       "startingLoadLb": 45,
-      "notes": "Stop at upper arm parallel. Belt weight only.",
-      "entryStandardReps": 12
+      "notes": "Stop at upper arm parallel. Belt weight only. Last set RIR 1, never zero.",
+      "entryStandardReps": 12,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "B"
     },
     {
       "id": "chest-supported-row",
@@ -117,8 +136,13 @@
         10,
         12
       ],
-      "defaultSets": 4,
-      "notes": "Strict, no torso English. Posture correction."
+      "defaultSets": 3,
+      "notes": "Strict, no torso English. Posture correction.",
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "B"
     },
     {
       "id": "incline-db-curl",
@@ -157,7 +181,11 @@
         20
       ],
       "defaultSets": 4,
-      "notes": "Priority 1 visual lever. Appears on both upper days. Do not skip when tired."
+      "notes": "Priority 1 visual lever. True failure on every set — it fails locally and the cost is a sore delt. Appears on both upper days. Do not skip when tired.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 75
     },
     {
       "id": "prone-y-raise",
@@ -180,7 +208,12 @@
       ],
       "defaultSets": 2,
       "startingLoadLb": 5,
-      "notes": "Postural insurance, not a strength lift. 5-10 lb is plenty."
+      "notes": "Postural insurance, not a strength lift. 5-10 lb is plenty.",
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 45,
+      "supersetGroup": "D"
     },
     {
       "id": "back-squat",
@@ -205,9 +238,15 @@
         5,
         8
       ],
-      "defaultSets": 4,
+      "defaultSets": 3,
       "startingLoadLb": 185,
-      "notes": "If 205 is currently a 5-8 rep set, start there instead. Depth over weight."
+      "notes": "Depth over weight. If Tuesday is a long shift, cap all three sets at RIR 2 — a failed squat rep at 7am is the most expensive set in the program.",
+      "targetRirBySet": [
+        2,
+        2,
+        1
+      ],
+      "restSeconds": 180
     },
     {
       "id": "romanian-deadlift",
@@ -233,7 +272,12 @@
         10
       ],
       "defaultSets": 3,
-      "startingLoadLb": 115
+      "startingLoadLb": 115,
+      "targetRirBySet": [
+        2
+      ],
+      "restSeconds": 90,
+      "supersetGroup": "B"
     },
     {
       "id": "leg-press",
@@ -254,7 +298,14 @@
         10,
         15
       ],
-      "defaultSets": 4
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1,
+        1,
+        0
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "C"
     },
     {
       "id": "seated-leg-curl",
@@ -271,7 +322,14 @@
         10,
         15
       ],
-      "defaultSets": 3
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1,
+        1,
+        0
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "C"
     },
     {
       "id": "standing-calf-raise",
@@ -288,8 +346,13 @@
         8,
         15
       ],
-      "defaultSets": 4,
-      "notes": "Full stretch, 2s pause at bottom."
+      "defaultSets": 3,
+      "notes": "Full stretch, 2s pause at bottom.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 90,
+      "supersetGroup": "B"
     },
     {
       "id": "hanging-leg-raise",
@@ -307,7 +370,11 @@
         15
       ],
       "defaultSets": 3,
-      "startingLoadLb": 0
+      "startingLoadLb": 0,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 45
     },
     {
       "id": "barbell-bench-press",
@@ -334,7 +401,7 @@
       ],
       "defaultSets": 4,
       "startingLoadLb": 115,
-      "notes": "Chosen over a second incline DB slot because 2.5 lb micro-loading beats 10 lb per-hand jumps."
+      "notes": "Replaced in v2 by incline barbell press — priority 2 is upper chest specifically. Kept here so past sets still resolve."
     },
     {
       "id": "seated-cable-row",
@@ -359,7 +426,12 @@
         8,
         12
       ],
-      "defaultSets": 4
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "B"
     },
     {
       "id": "wide-grip-pulldown",
@@ -385,7 +457,15 @@
         15
       ],
       "defaultSets": 4,
-      "notes": "Lat WIDTH, priority 3. Grip 1.5x shoulder width, full scapular elevation at top, stop at collarbone. Never let this become a heavy 5-rep grind."
+      "notes": "Lat WIDTH, priority 3. Grip 1.5x shoulder width, full scapular elevation at top, stop at collarbone. Never let this become a heavy 5-rep grind.",
+      "targetRirBySet": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "restSeconds": 90,
+      "supersetGroup": "A"
     },
     {
       "id": "straight-arm-pulldown",
@@ -407,7 +487,11 @@
         15
       ],
       "defaultSets": 2,
-      "notes": "Lats in the lengthened position. Light, slow, no torso swing."
+      "notes": "Lats in the lengthened position. Light, slow, no torso swing.",
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 60
     },
     {
       "id": "low-to-high-cable-fly",
@@ -428,8 +512,13 @@
         12,
         15
       ],
-      "defaultSets": 3,
-      "notes": "Upper chest, priority 2."
+      "defaultSets": 2,
+      "notes": "Upper chest, priority 2.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 60,
+      "supersetGroup": "C"
     },
     {
       "id": "reverse-pec-deck",
@@ -450,7 +539,12 @@
         15,
         20
       ],
-      "defaultSets": 3
+      "defaultSets": 3,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 60,
+      "supersetGroup": "C"
     },
     {
       "id": "face-pull",
@@ -472,7 +566,12 @@
         20
       ],
       "defaultSets": 2,
-      "notes": "External rotation. Add a set if dips pinch the front of the shoulder."
+      "notes": "External rotation. Add a set if dips pinch the front of the shoulder.",
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 45,
+      "supersetGroup": "D"
     },
     {
       "id": "deadlift",
@@ -499,7 +598,7 @@
       ],
       "defaultSets": 3,
       "startingLoadLb": 155,
-      "notes": "Likely a newer pattern. Build technique before load."
+      "notes": "CUT from program v2: highest systemic and lower-back cost of anything here, a newer pattern so there is technique fatigue on top, and it serves no stated visual priority. RDLs and hip thrusts cover the posterior chain. Kept here so past sets still resolve and it can be substituted in."
     },
     {
       "id": "bulgarian-split-squat",
@@ -522,7 +621,11 @@
       ],
       "defaultSets": 3,
       "startingLoadLb": 0,
-      "notes": "Per leg. Bodyweight first session, then 20-25 lb dumbbells. Exposes limb asymmetry \u2014 see full DEXA report before loading heavy."
+      "notes": "Per leg. Bodyweight first session, then 20-25 lb dumbbells. Exposes limb asymmetry — see full DEXA report before loading heavy.",
+      "targetRirBySet": [
+        2
+      ],
+      "restSeconds": 90
     },
     {
       "id": "leg-extension",
@@ -539,7 +642,12 @@
         12,
         20
       ],
-      "defaultSets": 4
+      "defaultSets": 3,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "B"
     },
     {
       "id": "lying-leg-curl",
@@ -556,7 +664,12 @@
         8,
         12
       ],
-      "defaultSets": 3
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "B"
     },
     {
       "id": "hip-thrust",
@@ -577,7 +690,12 @@
         10,
         15
       ],
-      "defaultSets": 3
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "C"
     },
     {
       "id": "seated-calf-raise",
@@ -594,7 +712,77 @@
         12,
         20
       ],
-      "defaultSets": 3
+      "defaultSets": 3,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 75,
+      "supersetGroup": "C"
+    },
+    {
+      "id": "incline-barbell-press",
+      "name": "Incline barbell press",
+      "muscles": [
+        {
+          "muscle": "upperChest",
+          "fraction": 1
+        },
+        {
+          "muscle": "chest",
+          "fraction": 1
+        },
+        {
+          "muscle": "frontDelts",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "triceps",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        8,
+        10
+      ],
+      "defaultSets": 3,
+      "startingLoadLb": 95,
+      "notes": "Replaces flat bench. Priority 2 is upper chest specifically; flat was only chosen for 2.5 lb micro-loading, and incline barbell gives the same jumps against a better target.",
+      "targetRirBySet": [
+        2,
+        2,
+        1
+      ],
+      "restSeconds": 90,
+      "supersetGroup": "A"
+    },
+    {
+      "id": "band-pull-apart",
+      "name": "Band pull-apart / reverse cable fly",
+      "muscles": [
+        {
+          "muscle": "rearDelts",
+          "fraction": 1
+        },
+        {
+          "muscle": "lowerTraps",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        20,
+        25
+      ],
+      "defaultSets": 2,
+      "startingLoadLb": 0,
+      "notes": "Very light. Posture insurance at the end of the easiest day.",
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 45
     }
   ],
   "templates": [
@@ -602,12 +790,12 @@
       "id": "upper-a",
       "name": "Upper A",
       "exerciseIds": [
-        "incline-db-press",
         "weighted-pullup",
+        "incline-db-press",
         "weighted-dip",
         "chest-supported-row",
-        "incline-db-curl",
         "cable-lateral-raise",
+        "face-pull",
         "prone-y-raise"
       ]
     },
@@ -617,9 +805,9 @@
       "exerciseIds": [
         "back-squat",
         "romanian-deadlift",
+        "standing-calf-raise",
         "leg-press",
         "seated-leg-curl",
-        "standing-calf-raise",
         "hanging-leg-raise"
       ]
     },
@@ -627,26 +815,25 @@
       "id": "upper-b",
       "name": "Upper B",
       "exerciseIds": [
-        "barbell-bench-press",
-        "seated-cable-row",
+        "incline-barbell-press",
         "wide-grip-pulldown",
-        "straight-arm-pulldown",
-        "low-to-high-cable-fly",
+        "seated-cable-row",
         "cable-lateral-raise",
+        "low-to-high-cable-fly",
         "reverse-pec-deck",
-        "face-pull"
+        "straight-arm-pulldown"
       ]
     },
     {
       "id": "lower-b",
       "name": "Lower B",
       "exerciseIds": [
-        "deadlift",
         "bulgarian-split-squat",
         "leg-extension",
         "lying-leg-curl",
         "hip-thrust",
-        "seated-calf-raise"
+        "seated-calf-raise",
+        "band-pull-apart"
       ]
     }
   ],

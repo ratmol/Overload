@@ -43,6 +43,7 @@ export function LiftSheet({
   date,
   isDeload,
   isLast,
+  supersetWith,
   rest,
   onFinished,
 }: {
@@ -51,6 +52,8 @@ export function LiftSheet({
   date: IsoDate;
   isDeload: boolean;
   isLast: boolean;
+  /** The lift to alternate with, when this one is half of a superset. */
+  supersetWith?: Exercise | undefined;
   /**
    * Owned by the session, not by this component.
    *
@@ -81,14 +84,27 @@ export function LiftSheet({
   // fastest way to make a logger untrustworthy mid-set.
   useEffect(() => {
     if (pad !== null || !prescribed || !data) return;
-    const lastInSession = data.logged.filter((s) => !s.isWarmup).at(-1);
+    const done = data.logged.filter((s) => !s.isWarmup);
+    const lastInSession = done.at(-1);
     setPad({
       load: lastInSession?.addedWeightLb ?? prescribed.load,
       reps: lastInSession?.reps ?? prescribed.targetReps[1],
-      rir: lastInSession?.rir ?? 2,
+      // Seeded from the LADDER for the set you are on, not from the last set.
+      // On a 2/2/1 exercise the third set's target is 1, and defaulting to the
+      // previous set's 2 would quietly turn the one hard set into another easy
+      // one — which is the entire redesign, undone by a default.
+      rir: prescribed.rirBySet[Math.min(done.length, prescribed.rirBySet.length - 1)] ?? 2,
       isWarmup: false,
     });
   }, [pad, prescribed, data]);
+
+  // Show this lift's interval while idle, so a 90s superset does not read 3:00.
+  // In an effect, not in render: the timer's state lives in the parent, and
+  // setting it during render is a cross-component update React rejects.
+  const { prime } = rest;
+  useEffect(() => {
+    prime(exercise.restSeconds);
+  }, [prime, exercise.restSeconds]);
 
   if (!data || !prescribed || !pad) return <div className="empty">…</div>;
 
@@ -112,7 +128,7 @@ export function LiftSheet({
     // and then work. Leaving the toggle on is how a whole session gets logged
     // as warm-ups and silently vanishes from the volume audit.
     if (wasWarmup) setPad((p) => ({ ...p!, isWarmup: false }));
-    rest.start();
+    rest.start(exercise.restSeconds);
   }
 
   const step = (patch: Partial<PadState>) => setPad((p) => ({ ...p!, ...patch }));
@@ -122,12 +138,26 @@ export function LiftSheet({
       <section className="sheet">
         <div className="lift-head">
           <h2>{exercise.name}</h2>
-          {isDeload && (
-            <span className="badge" data-tone="mark">
-              Deload
-            </span>
-          )}
+          <span className="badge-row">
+            {supersetWith && (
+              <span className="badge" title={`Alternate with ${supersetWith.name}`}>
+                Superset
+              </span>
+            )}
+            {isDeload && (
+              <span className="badge" data-tone="mark">
+                Deload
+              </span>
+            )}
+          </span>
         </div>
+
+        {supersetWith && !isDeload && (
+          <p className="superset-note">
+            Alternate with <strong>{supersetWith.name}</strong> — rest{' '}
+            {exercise.restSeconds ?? 90}s between, not after each.
+          </p>
+        )}
 
         <div className="prescription">
           {prescribed.sets} × {prescribed.targetReps[0]}–{prescribed.targetReps[1]}
@@ -135,6 +165,8 @@ export function LiftSheet({
             @ {lb(prescribed.load)} lb{exercise.isBodyweightLoaded ? ' belt' : ''}
           </span>
         </div>
+
+        <RirLadder rir={prescribed.rirBySet} done={working.length} />
 
         <p className="reason" data-outcome={prescribed.outcome}>
           {prescribed.reason}
@@ -223,7 +255,7 @@ export function LiftSheet({
                 <td>
                   {prescribed.targetReps[0]}–{prescribed.targetReps[1]}
                 </td>
-                <td>—</td>
+                <td>{prescribed.rirBySet[working.length + 1 + i] ?? '—'}</td>
                 {exercise.isBodyweightLoaded && <td className="system" />}
                 <td />
               </tr>
@@ -312,6 +344,39 @@ export function LiftSheet({
         )}
       </section>
     </>
+  );
+}
+
+/**
+ * The ladder, printed as a row of rungs.
+ *
+ * This is the one number that explains why a 19-set session is survivable, and
+ * before it existed the app prescribed the sets while losing the reason. The
+ * set you are on is marked; a 0 is labelled, because "RIR 0" and "failure" are
+ * the same instruction and only one of them reads as an instruction.
+ */
+function RirLadder({ rir, done }: { rir: readonly number[]; done: number }) {
+  return (
+    <div className="rir-ladder">
+      <span className="rir-label">RIR</span>
+      {rir.map((r, i) => (
+        <span
+          key={i}
+          className="rir-rung"
+          data-state={i < done ? 'done' : i === done ? 'current' : 'todo'}
+          data-failure={r === 0}
+        >
+          {r === 0 ? 'F' : r}
+        </span>
+      ))}
+      <span className="rir-hint">
+        {rir.every((r) => r === 0)
+          ? 'true failure, every set'
+          : rir.some((r) => r === 0)
+            ? 'F = to failure'
+            : `last set stops at ${Math.min(...rir)}`}
+      </span>
+    </div>
   );
 }
 

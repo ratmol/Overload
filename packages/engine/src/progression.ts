@@ -6,6 +6,7 @@
  * 10 lb difference in real work. Every other app logs the belt number only.
  */
 import { daysBetween } from './dates.js';
+import { targetRirForSet } from './types.js';
 import type { Exercise, IsoDate, RepRange, WeightEntry } from './types.js';
 
 /**
@@ -46,8 +47,19 @@ export interface Prescription {
   load: number;
   targetReps: RepRange;
   sets: number;
+  /**
+   * RIR target for each prescribed set, expanded from the exercise's ladder.
+   * Always exactly `sets` long, so the UI never has to decide what a missing
+   * entry means.
+   */
+  rirBySet: number[];
   /** Human-readable explanation. Same philosophy as Adjustment.reason. */
   reason: string;
+}
+
+/** Expands an exercise's RIR ladder to a concrete per-set list. */
+export function rirLadder(exercise: Exercise, sets: number, fallback = 2): number[] {
+  return Array.from({ length: sets }, (_, i) => targetRirForSet(exercise, i, fallback));
 }
 
 export type ProgressionOutcome = 'advance-load' | 'add-reps' | 'stalled' | 'first-session';
@@ -103,6 +115,7 @@ export function nextPrescription(
       load: exercise.startingLoadLb ?? 0,
       targetReps: exercise.defaultRepRange,
       sets: exercise.defaultSets,
+      rirBySet: rirLadder(exercise, exercise.defaultSets),
       outcome: 'first-session',
       reason: 'First session. Starting load seeded from the plan.',
     };
@@ -123,6 +136,7 @@ export function nextPrescription(
       load: 0,
       targetReps: [exercise.entryStandardReps, exercise.entryStandardReps],
       sets: exercise.defaultSets,
+      rirBySet: rirLadder(exercise, exercise.defaultSets),
       outcome: 'add-reps',
       reason: `Own ${exercise.entryStandardReps} strict bodyweight reps on every set before adding load. Best set last time was ${best}.`,
     };
@@ -140,6 +154,7 @@ export function nextPrescription(
       load,
       targetReps: exercise.defaultRepRange,
       sets: exercise.defaultSets,
+      rirBySet: rirLadder(exercise, exercise.defaultSets),
       outcome: 'advance-load',
       reason: `All ${last.sets.length} sets hit ${max} reps at ${lastLoad} lb. Adding ${exercise.incrementLb} lb, back to ${min} reps.`,
     };
@@ -154,6 +169,7 @@ export function nextPrescription(
       load: lastLoad,
       targetReps: exercise.defaultRepRange,
       sets: exercise.defaultSets,
+      rirBySet: rirLadder(exercise, exercise.defaultSets),
       outcome: 'stalled',
       reason: `No rep or load gain across ${prev.date} and ${last.date}, following none across ${older.date} and ${prev.date}. Check the bodyweight trend before changing programming — at a 0.25 lb/week gain the calories are usually the cause.`,
     };
@@ -164,6 +180,7 @@ export function nextPrescription(
     load: lastLoad,
     targetReps: exercise.defaultRepRange,
     sets: exercise.defaultSets,
+    rirBySet: rirLadder(exercise, exercise.defaultSets),
     outcome: 'add-reps',
     reason: `${totalReps} total reps at ${lastLoad} lb last session. Same load, add reps toward ${max} on every set.`,
   };
@@ -227,15 +244,23 @@ export function daysSince(from: IsoDate, today: IsoDate): number {
  */
 export function deloadPrescription(exercise: Exercise, normal: Prescription): Prescription {
   const load = exercise.isBodyweightLoaded ? 0 : roundTo(normal.load * 0.875, exercise.incrementLb);
+  const sets = Math.max(1, Math.ceil(normal.sets / 2));
   return {
     load,
     targetReps: normal.targetReps,
-    sets: Math.max(1, Math.ceil(normal.sets / 2)),
+    sets,
+    // "Stop 4-5 reps short" is the deload instruction, and it OVERRIDES the
+    // ladder. A deload that still asked for true failure on lateral raises
+    // would not be a deload.
+    rirBySet: Array.from({ length: sets }, () => DELOAD_RIR),
     reason: exercise.isBodyweightLoaded
       ? 'Deload week: bodyweight only, sets halved, stop 4-5 reps short.'
       : `Deload week: ~87.5% of ${normal.load} lb, sets halved, stop 4-5 reps short.`,
   };
 }
+
+/** Deload sets stop 4-5 reps short, regardless of what the ladder says. */
+export const DELOAD_RIR = 4;
 
 function roundTo(value: number, step: number): number {
   return Math.round(value / step) * step;

@@ -182,9 +182,49 @@ export const Exercise = z.object({
    * stripped back to bodyweight.
    */
   entryStandardReps: z.number().int().positive().optional(),
+  /**
+   * Per-set RIR targets, in order. `[2, 2, 1]` means the last set is the only
+   * hard one; `[0, 0, 0, 0]` means true failure every set.
+   *
+   * This is the core of program v2 and it is per-SET, not per-exercise, because
+   * the whole redesign is "failure is earned by the exercise, not by me": a
+   * cable lateral raise fails locally and costs a sore delt, while a +70 dip
+   * fails systemically and costs the next 48 hours. A single RIR field per
+   * exercise cannot express a ladder, and without the ladder the app prescribes
+   * the sets while losing the reason they are survivable.
+   *
+   * Shorter than `defaultSets` is legal — the last value repeats.
+   */
+  targetRirBySet: z.array(z.number().min(0).max(10)).optional(),
+  /**
+   * Exercises sharing a group are supersetted and alternated. Antagonist
+   * pairing is what makes a 19-set session fit in 34 minutes: each exercise
+   * fills the other's rest with no interference.
+   */
+  supersetGroup: z.string().optional(),
+  /** Rest after a set of this exercise, seconds. Overrides the global default. */
+  restSeconds: z.number().int().positive().optional(),
   notes: z.string().optional(),
 });
 export type Exercise = z.infer<typeof Exercise>;
+
+/**
+ * The RIR target for one set, zero-indexed.
+ *
+ * The last entry repeats when the ladder is shorter than the set count, so
+ * `[2, 2, 1]` on a fourth set gives 1 rather than undefined. Falls back to the
+ * supplied default when the exercise has no ladder at all, which is every
+ * exercise seeded from plan v1.
+ */
+export function targetRirForSet(
+  exercise: Pick<Exercise, 'targetRirBySet'>,
+  setIndex: number,
+  fallback = 2,
+): number {
+  const ladder = exercise.targetRirBySet;
+  if (!ladder || ladder.length === 0) return fallback;
+  return ladder[Math.min(setIndex, ladder.length - 1)] ?? fallback;
+}
 
 export const SessionTemplate = z.object({
   id: Id,

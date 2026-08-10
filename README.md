@@ -5,7 +5,7 @@ calorie engine that explains every number it produces.
 
 No server. No account. No sync. Your data stays in your browser.
 
-**Status:** both halves are built and wired together. 182 tests. The app logs
+**Status:** both halves are built and wired together. 233 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -17,16 +17,16 @@ the confidence model as a description of the engine's own opinion, not evidence.
 
 | | |
 |---|---|
-| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 154 tests. **Start here.** |
+| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 186 tests. **Start here.** |
 | [`apps/web`](apps/web) | React PWA. The logger and the dashboard. |
-| [`data/plan.json`](data/plan.json) | The training program as data, not code. |
+| [`data/plan.json`](data/plan.json) | The training program as data, not code. Currently program v2. |
 | [`docs/ALGORITHM.md`](docs/ALGORITHM.md) | Every constant and the assumption behind it. |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Irreversible calls and what they cost. |
 
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 154 engine + 28 app tests
+npm test           # 186 engine + 47 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -59,6 +59,13 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
   from the last two sessions: all sets at the top of the range adds an
   increment, otherwise chase reps at the same load, and two flat transitions in
   a row reports a stall — with the sentence explaining which it did and why.
+- **A per-set RIR ladder.** `2 / 2 / 1` on a weighted pull-up, true failure on
+  every set of a lateral raise. Failure is earned by the exercise, not by the
+  lifter: a cable raise fails locally and costs a sore delt, a +70 dip fails
+  systemically and bills the next 48 hours. The pad defaults to the rung for the
+  set you are on, so the one hard set does not quietly become another easy one.
+- **Supersets and per-exercise rest**, because a 19-set session only fits in 34
+  minutes if the antagonist pairs actually fill each other's rest.
 - **Last session's numbers** on screen while you log this one.
 - **System load** on the same row as belt weight, so the column that matters is
   the one you can see moving.

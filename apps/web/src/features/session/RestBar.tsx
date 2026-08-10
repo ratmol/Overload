@@ -28,7 +28,7 @@ export function RestBar({ rest }: { rest: RestTimer }) {
         <button onClick={() => rest.adjustTarget(30)} aria-label="Rest target up 30 seconds">
           +30
         </button>
-        <button onClick={rest.running ? rest.stop : rest.start}>
+        <button onClick={() => (rest.running ? rest.stop() : rest.start())}>
           {rest.running ? 'Stop' : 'Start'}
         </button>
       </div>

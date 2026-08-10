@@ -19,10 +19,15 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 168 tests
-(148 engine, 20 CSV import). The app has the training logger, the weight trend,
-estimated expenditure with confidence, the target with proposals, intake import
-and the weekly volume audit.
+**Stage 3 — engine wired into the app.** Both halves are built. 233 tests
+(186 engine, 47 app). The app has the training logger, the weight trend,
+estimated expenditure with confidence, the target with proposals, intake import,
+the weekly volume audit, and the food-logging groundwork.
+
+`data/plan.json` is **program v2** — 75 sets a week, per-set RIR ladders,
+supersets, per-exercise rest. See `PROGRAM-V2.md` one directory up. A plan
+version bump now overwrites existing exercises (DECISIONS §18); it used to be
+additive-only, which made v2 undeliverable.
 
 **Two acceptance tests are still open, and neither is a coding task:**
 
@@ -53,10 +58,6 @@ is neither UI nor domain rule — reading someone else's CSV export.
 **No number without a reason.** Every figure the app prints comes with the
 engine's own reason string. If a component computes a figure itself, or renders
 one the engine could not explain, that is a bug. See DECISIONS.md §15.
-
-**Engine before UI, always.** Every domain rule lands in `packages/engine` with
-a test before any component renders it. If a rule cannot be tested without a
-browser, it is in the wrong place.
 
 **Before an irreversible decision** — schema shape, storage layer, licence,
 package boundary — state the tradeoff, name the alternatives, recommend one,
@@ -95,7 +96,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (148 engine + 20 web)
+npm test                  # vitest, both workspaces (186 engine + 47 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -110,7 +111,7 @@ apps/web/src/
   features/       today, session, history, volume, body, data
   ui/             tokens.css, app.css
   lib/            routing, rest timer, formatting, CSV import
-apps/web/test/    csv.test.ts. The only app code worth testing.
+apps/web/test/    csv parsing, readiness thresholds, and plan.json's own claims
 packages/engine/src/
   types.ts        Zod schemas. Single source of truth. No logic.
   dates.ts        UTC calendar-date arithmetic. All date math goes here.
@@ -120,6 +121,7 @@ packages/engine/src/
   progression.ts  System load + double progression state machine
   deload.ts       Trigger detection
   volume.ts       Weekly hard-set audit per muscle
+  food.ts         Portion maths + the foodLog/intake reconciliation seam
 data/plan.json    The training program as data, not code.
 docs/             ALGORITHM.md (assumptions), DECISIONS.md (ADR-lite)
 ```

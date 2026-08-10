@@ -287,6 +287,75 @@ h2 {
   white-space: nowrap;
 }
 
+
+.badge-row {
+  display: flex;
+  gap: var(--s2);
+}
+
+/* --------------------------------------------------------------------- */
+/* The RIR ladder                                                         */
+/* --------------------------------------------------------------------- */
+
+.rir-ladder {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+
+.rir-label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+}
+
+.rir-rung {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ink-70);
+  background: var(--paper);
+}
+
+.rir-rung[data-state="done"] {
+  color: var(--ink-25);
+  border-color: var(--rule);
+  text-decoration: line-through;
+}
+
+/* The set you are on. Same red as the current logbook row, same meaning. */
+.rir-rung[data-state="current"] {
+  border-color: var(--mark);
+  color: var(--mark);
+  background: var(--mark-soft);
+}
+
+/* A failure set is filled, because it is an instruction, not a number. */
+.rir-rung[data-failure="true"][data-state="current"] {
+  background: var(--mark);
+  color: var(--paper-raised);
+}
+
+.rir-hint {
+  font-size: 0.75rem;
+  color: var(--ink-45);
+}
+
+.superset-note {
+  font-size: 0.8125rem;
+  color: var(--ink-70);
+  margin: var(--s2) 0 0;
+}
+
 .badge[data-tone="mark"] {
   border-color: var(--mark);
   color: var(--mark);

@@ -367,6 +367,69 @@ is the thing it exists to prevent.
 
 ---
 
+## 18. A plan version bump now overwrites existing exercises
+
+§14 established that seeding is additive and never destructive: a `plan.json`
+version bump inserts new exercises and leaves existing rows alone, "because a
+rep range edited in the app is a decision and a deploy is not a reason to
+reverse it."
+
+**That rule made program v2 undeliverable.** v2 changes `defaultSets`,
+`defaultRepRange`, `restSeconds` and the new RIR ladder on nearly every existing
+exercise. Under additive-only seeding, bumping the version would have added the
+incline barbell press and the band pull-apart while leaving squats, pull-ups and
+everything else on v1's numbers — a plan that is half of each version and
+matches no document.
+
+The protection was also guarding something that does not exist. **There is no
+in-app exercise editor.** No user edit can be destroyed by this, because there
+is no way to make one. When an editor is built, this needs revisiting — most
+likely a per-exercise "edited by hand" flag that the migration skips.
+
+**Chosen:** on a version bump, `bulkPut` every exercise and template from
+`plan.json`. Alternatives were a one-off migration script (same effect, more
+ceremony, and it has to be written again for v3) and an in-app "reset to plan"
+button (puts a destructive action behind a tap nobody would find at the moment
+they needed it).
+
+**What is never touched:** logged sets, sessions, weights, and exercises that
+have left the plan. Cutting the deadlift removes it from every template but
+keeps the exercise row, so months of logged deadlifts still resolve to a name
+and it stays available as a substitute. Verified against a database seeded by
+the previous release: a logged deadlift set survived the migration intact.
+
+**Reversible?** The rule, yes. A migration that has already run, no — the old
+values are gone. That is what the JSON export is for.
+
+---
+
+## 19. Per-set RIR targets and superset groups are schema, not notes
+
+`Exercise` gains `targetRirBySet: number[]`, `supersetGroup?: string` and
+`restSeconds?: number`.
+
+The RIR ladder had to be per-SET rather than per-exercise, which is the whole
+reason a new field was needed instead of reusing a note. Program v2's argument
+is that *failure is earned by the exercise*: a cable lateral raise fails
+locally and costs a sore delt, so it earns true failure on all four sets, while
+a +70 dip fails systemically and bills the next 48 hours, so it stops at RIR 1
+and only on the last set. `[2, 2, 1]` and `[0]` are both unrepresentable in a
+single scalar.
+
+Without this in the schema the app would prescribe v2's sets while losing the
+reason they are survivable — and the sets alone, taken at the old effort, are
+the thing that caused the fatigue v2 exists to fix.
+
+**Ladders shorter than the set count repeat their last rung**, so `[2, 2, 1]`
+on a fourth set gives 1 rather than `undefined`, and `[0]` means failure on
+every set however many there are. Deload overrides the ladder entirely at RIR 4
+— a deload still demanding failure on lateral raises would not be a deload.
+
+**Reversible?** Yes. Both fields are optional and every v1 exercise without them
+falls back to RIR 2.
+
+---
+
 <!--
 Template for new entries:
 

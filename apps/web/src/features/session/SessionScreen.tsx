@@ -159,6 +159,13 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
           date={date}
           isDeload={isDeload}
           isLast={index >= exercises.length - 1}
+          supersetWith={
+            exercise.supersetGroup === undefined
+              ? undefined
+              : exercises.find(
+                  (e) => e.id !== exercise.id && e.supersetGroup === exercise.supersetGroup,
+                )
+          }
           rest={rest}
           onFinished={() => {
             const next = exercises[index + 1];

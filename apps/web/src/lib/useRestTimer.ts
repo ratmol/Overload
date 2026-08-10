@@ -11,27 +11,37 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const TARGET_KEY = 'overload.restTargetSec';
+/** Used only for exercises the plan gives no interval for. */
 const DEFAULT_TARGET_SEC = 180;
-
-function readTarget(): number {
-  const raw = Number(localStorage.getItem(TARGET_KEY));
-  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TARGET_SEC;
-}
 
 export interface RestTimer {
   /** Seconds left; negative once the target has passed. */
   remaining: number;
   targetSec: number;
   running: boolean;
-  start: () => void;
+  /**
+   * `overrideSec` is the exercise's own prescribed rest.
+   *
+   * Program v2 specifies rest per exercise — 90s on the supersetted pairs, 3
+   * minutes on squats, 45s on the postural work — and the session only fits in
+   * 45 minutes if those are kept. A single global default would silently
+   * lengthen every short interval, and "sessions past 50 min" is listed in the
+   * document as always being rest drift.
+   */
+  start: (overrideSec?: number) => void;
+  /**
+   * Sets the interval without starting the clock, so an idle timer shows the
+   * rest the *current* lift wants rather than the last one's. Ignored while
+   * running: changing the target mid-rest would move the finish line.
+   */
+  prime: (seconds: number | undefined) => void;
   stop: () => void;
   adjustTarget: (deltaSec: number) => void;
 }
 
 export function useRestTimer(): RestTimer {
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [targetSec, setTargetSec] = useState(readTarget);
+  const [targetSec, setTargetSec] = useState(DEFAULT_TARGET_SEC);
   const [now, setNow] = useState(() => Date.now());
   const alerted = useRef(false);
 
@@ -52,24 +62,33 @@ export function useRestTimer(): RestTimer {
     beep();
   }, [remaining, startedAt]);
 
-  const start = useCallback(() => {
+  const start = useCallback((overrideSec?: number) => {
     alerted.current = false;
+    if (overrideSec !== undefined && overrideSec > 0) setTargetSec(overrideSec);
     setNow(Date.now());
     setStartedAt(Date.now());
   }, []);
 
+  const prime = useCallback(
+    (seconds: number | undefined) => {
+      if (seconds === undefined || seconds <= 0 || startedAt !== null) return;
+      setTargetSec(seconds);
+    },
+    [startedAt],
+  );
+
   const stop = useCallback(() => setStartedAt(null), []);
 
+  // Adjusts THIS interval only. Not persisted: the plan owns the number, and a
+  // sticky global default would quietly undo every short superset interval.
   const adjustTarget = useCallback((deltaSec: number) => {
     setTargetSec((prev) => {
-      const next = Math.max(30, Math.min(600, prev + deltaSec));
-      localStorage.setItem(TARGET_KEY, String(next));
       alerted.current = false;
-      return next;
+      return Math.max(30, Math.min(600, prev + deltaSec));
     });
   }, []);
 
-  return { remaining, targetSec, running: startedAt !== null, start, stop, adjustTarget };
+  return { remaining, targetSec, running: startedAt !== null, start, prime, stop, adjustTarget };
 }
 
 /** A short tone. Wrapped because an AudioContext can be blocked or absent. */
