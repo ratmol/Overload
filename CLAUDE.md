@@ -19,8 +19,8 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 238 tests
-(186 engine, 52 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 252 tests
+(186 engine, 66 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
 the weekly volume audit, and the food-logging groundwork.
 
@@ -66,8 +66,10 @@ else, just build it.
 
 **Priority order:** correctness > maintainability > privacy > UX > feature count.
 
-**No server, no accounts, no analytics, no telemetry.** If a task appears to
-need one, the task is wrong.
+**No analytics, no telemetry, ever.** Sync is opt-in and supersedes the older
+"no server, no accounts" rule — see DECISIONS.md section 21. The app must stay
+fully usable signed out, IndexedDB stays the source of truth for reads, and
+nothing auth-related enters `packages/engine`.
 
 **No AI in the calculation path.** A language model can summarise a week in
 prose. It does not compute a TDEE. That boundary is the difference between a
@@ -96,7 +98,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (186 engine + 52 app)
+npm test                  # vitest, both workspaces (186 engine + 66 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)

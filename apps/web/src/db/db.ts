@@ -11,6 +11,7 @@
  * Index choices are recorded in docs/DECISIONS.md §14.
  */
 import Dexie, { type Table } from 'dexie';
+import type { SyncMeta, SyncState, Tombstone } from './sync-bookkeeping.js';
 import type {
   Adjustment,
   Exercise,
@@ -79,6 +80,10 @@ export class OverloadDb extends Dexie {
   intake!: Table<IntakeEntry, string>;
   adjustments!: Table<Adjustment, string>;
   target!: Table<TargetState, string>;
+  /** Sync bookkeeping. Owned by sync-bookkeeping.ts; nothing else reads these. */
+  syncMeta!: Table<SyncMeta, string>;
+  tombstones!: Table<Tombstone, string>;
+  syncState!: Table<SyncState, string>;
   foods!: Table<FoodItem, string>;
   /**
    * One row per food eaten, many per day, written incrementally.
@@ -139,6 +144,20 @@ export class OverloadDb extends Dexie {
       foods: 'id, name, barcode, lastUsedAt',
       foodLog: 'id, date, foodId, [date+meal]',
       savedMeals: 'id',
+    });
+
+    // v4 adds sync bookkeeping. Additive, and deliberately in its own tables
+    // rather than as columns on the domain rows: `packages/engine` owns those
+    // shapes, and nothing that reads training data should have to learn what a
+    // tombstone is.
+    //
+    // `dirty` is indexed as 1/0 rather than a boolean because IndexedDB keys
+    // may not be booleans — indexing one silently indexes nothing, which is the
+    // same trap that took out `foods.isFavourite` in v3.
+    this.version(4).stores({
+      syncMeta: 'id, table, dirty, updatedAt',
+      tombstones: 'id, table, dirty, deletedAt',
+      syncState: 'id',
     });
   }
 }

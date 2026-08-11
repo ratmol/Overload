@@ -462,6 +462,72 @@ fills, not its own, since a stand-in rarely has a superset group.
 
 ---
 
+## 21. Optional sync, which supersedes section 2's no-server rule
+
+Section 2 says: *"No server, no accounts, no sync, no analytics, no telemetry.
+If a task appears to need one, the task is wrong."* The README led with **"No
+server. No account. No sync. Your data stays in your browser."**
+
+That is being reversed deliberately, and it costs something real: it was the
+line that made this project distinctive next to every other fitness app.
+
+**The reason:** two devices, no sync, data stranded on whichever one was used
+last. That is a product failure, and it beats an architectural preference.
+
+**The honest new claim is "local-first, works fully offline, optional sync."**
+Still unusual, still true. What must not happen is the old sentence quietly
+disappearing, so this entry exists and the README says what changed.
+
+**IndexedDB stays the source of truth for reads.** Supabase is a sync target,
+not a replacement. Replacing Dexie with "fetch from Postgres on load" loses
+offline, loses instant startup, and breaks the gym-with-no-signal case, which is
+the actual use case. The app stays fully usable signed out — signing in turns
+sync on; it is not a gate on the product.
+
+**Nothing auth-related enters `packages/engine`.** The engine takes plain data.
+That boundary is what makes it the portfolio piece.
+
+### What syncs, and what deliberately does not
+
+Synced: `sessions`, `sets`, `weights`, `intake`, `adjustments`, `foods`,
+`foodLog`, `savedMeals`, `profile`, `target`.
+
+**Not synced: `exercises`, `templates`, `plan`.** They are seeded identically on
+every device from `data/plan.json`, and section 18 has a migration that
+OVERWRITES them on a version bump. Syncing them means two devices on different
+app versions fight forever, one pushing v3 rows and the other pushing v2. They
+stay local until the program is per-user rather than global — a much larger
+piece of work than sync, because `profile`, `target` and `plan` are all
+single-row singletons.
+
+### Bookkeeping lives beside the data, not inside it
+
+`updatedAt` and deletions are recorded in `syncMeta` and `tombstones` rather
+than as columns on the domain rows. Two reasons: the engine owns those shapes
+and an `updatedAt` column is a persistence concern; and no read path has to
+learn about sync, so no screen can start showing deleted sets because somebody
+forgot a `where deletedAt is null`.
+
+Deletes remove the local row and write a tombstone. A hard delete cannot sync on
+its own — the other device cannot distinguish "deleted elsewhere" from "not
+uploaded yet", so it re-uploads the row and the deletion undoes itself.
+
+### The rule that matters most: an import is not a deletion
+
+`importAll` replaces the local database wholesale. It marks every row dirty and
+**emits no tombstones**. If replacing rows became a deletion each, restoring a
+backup on a laptop would delete the phone's history too — the single worst
+failure this layer could have. Rows the import lacked return on the next pull:
+data comes back rather than vanishing. Pinned by a test.
+
+Erase-history does the opposite and tombstones everything, because that one is a
+deliberate deletion.
+
+**Reversible?** The code, yes. Other people's data, no — multi-user is a
+different project with real duties attached, and is not what this enables.
+
+---
+
 <!--
 Template for new entries:
 

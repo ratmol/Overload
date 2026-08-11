@@ -27,6 +27,7 @@ import {
   WeightEntry,
 } from '@overload/engine';
 import { db } from './db.js';
+import { markEverythingDirty } from './sync-bookkeeping.js';
 
 export const BACKUP_FORMAT = 3;
 
@@ -211,6 +212,14 @@ export async function importAll(raw: unknown): Promise<ImportResult> {
       await db.savedMeals.bulkAdd(backup.savedMeals);
     },
   );
+
+  // The imported database is now the local truth and the server has not seen
+  // it. Deliberately NOT tombstones for the rows that were replaced: an import
+  // is a restore, not a decision to delete anything, and turning it into
+  // thousands of deletions would propagate the wipe to every other device.
+  // Anything the import lacked comes back on the next pull, which is the safe
+  // direction — data returns rather than vanishes.
+  await markEverythingDirty();
 
   return {
     format: parsed.format,

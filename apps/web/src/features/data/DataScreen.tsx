@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db.js';
+import { eraseHistory } from '../../db/queries.js';
 import { exportAll, downloadBackup, importAll, type ImportResult } from '../../db/backup.js';
 import {
   persistenceState,
@@ -75,17 +76,7 @@ export function DataScreen() {
     ) {
       return;
     }
-    await db.transaction(
-      'rw',
-      [db.sessions, db.sets, db.weights, db.intake, db.adjustments],
-      async () => {
-        await db.sessions.clear();
-        await db.sets.clear();
-        await db.weights.clear();
-        await db.intake.clear();
-        await db.adjustments.clear();
-      },
-    );
+    await eraseHistory();
     // The profile and the target survive: they are settings, not history, and
     // erasing them would silently switch the calorie side back off.
     setMessage('History erased. The program, your profile and your target are still here.');

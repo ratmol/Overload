@@ -3,9 +3,14 @@
 An open-source, local-first training and body-data logger with an adaptive
 calorie engine that explains every number it produces.
 
-No server. No account. No sync. Your data stays in your browser.
+Local-first. Works fully offline. Optional sync.
 
-**Status:** both halves are built and wired together. 238 tests. The app logs
+Your data lives in your browser and the app is completely usable without an
+account — signing in turns sync on, it is not a gate on the product. This
+supersedes an earlier "no server, no account, no sync"; see
+[DECISIONS section 21](docs/DECISIONS.md) for what that cost and why.
+
+**Status:** both halves are built and wired together. 252 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -26,7 +31,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 186 engine + 52 app tests
+npm test           # 186 engine + 66 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```

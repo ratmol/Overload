@@ -21,6 +21,7 @@ import {
   type UserProfile,
 } from '@overload/engine';
 import { db, newId, type TargetState } from './db.js';
+import { touch, tombstone } from './sync-bookkeeping.js';
 
 export const PROFILE_ID = 'me';
 
@@ -30,6 +31,7 @@ export async function getProfile(): Promise<UserProfile | undefined> {
 
 export async function saveProfile(profile: Omit<UserProfile, 'id'>): Promise<void> {
   await db.profile.put({ ...profile, id: PROFILE_ID });
+  await touch('profile', [PROFILE_ID]);
 }
 
 export async function getTarget(): Promise<TargetState | undefined> {
@@ -52,6 +54,7 @@ export async function setTargetManually(kcal: number): Promise<void> {
     lastAdjustmentDate: null,
     consecutiveUnresponsive: 0,
   });
+  await touch('target', ['current']);
 }
 
 // ---------------------------------------------------------------------------
@@ -59,7 +62,9 @@ export async function setTargetManually(kcal: number): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function addIntakeEntries(entries: readonly Omit<IntakeEntry, 'id'>[]): Promise<void> {
-  await db.intake.bulkAdd(entries.map((e) => ({ ...e, id: newId() })));
+  const rows = entries.map((e) => ({ ...e, id: newId() }));
+  await db.intake.bulkAdd(rows);
+  await touch('intake', rows.map((r) => r.id));
 }
 
 /**
@@ -75,22 +80,27 @@ export async function replaceIntakeForDates(
   entries: readonly Omit<IntakeEntry, 'id'>[],
 ): Promise<{ replaced: number; added: number }> {
   const dateSet = new Set(dates);
-  let replaced = 0;
+  const rows = entries.map((e) => ({ ...e, id: newId() }));
+  let removed: string[] = [];
+
   await db.transaction('rw', db.intake, async () => {
-    const existing = await db.intake.where('date').anyOf([...dateSet]).primaryKeys();
-    replaced = existing.length;
-    await db.intake.bulkDelete(existing);
-    await db.intake.bulkAdd(entries.map((e) => ({ ...e, id: newId() })));
+    removed = (await db.intake.where('date').anyOf([...dateSet]).primaryKeys()) as string[];
+    await db.intake.bulkDelete(removed);
+    await db.intake.bulkAdd(rows);
   });
-  return { replaced, added: entries.length };
+
+  await tombstone('intake', removed);
+  await touch('intake', rows.map((r) => r.id));
+  return { replaced: removed.length, added: entries.length };
 }
 
 /** Sets the activity tag on every entry for one day. */
 export async function tagDay(date: IsoDate, tag: ActivityTag): Promise<void> {
-  const ids = await db.intake.where('date').equals(date).primaryKeys();
+  const ids = (await db.intake.where('date').equals(date).primaryKeys()) as string[];
   await db.transaction('rw', db.intake, async () => {
     for (const id of ids) await db.intake.update(id, { activityTag: tag });
   });
+  await touch('intake', ids);
 }
 
 export async function logIntakeManually(input: {
@@ -103,11 +113,14 @@ export async function logIntakeManually(input: {
 }): Promise<void> {
   // A manual entry for a day replaces that day outright. Manual logging is
   // "here is my day", not "here is one more food".
-  const existing = await db.intake.where('date').equals(input.date).primaryKeys();
+  const existing = (await db.intake.where('date').equals(input.date).primaryKeys()) as string[];
+  const id = newId();
   await db.transaction('rw', db.intake, async () => {
     await db.intake.bulkDelete(existing);
-    await db.intake.add({ ...input, id: newId(), source: 'manual' });
+    await db.intake.add({ ...input, id, source: 'manual' });
   });
+  await tombstone('intake', existing);
+  await touch('intake', [id]);
 }
 
 // ---------------------------------------------------------------------------
@@ -222,9 +235,10 @@ export async function acceptAdjustment(
     Math.sign(decision.newTarget - decision.previousTarget) ===
       Math.sign(previous.newTarget - previous.previousTarget);
 
+  const adjustmentId = newId();
   await db.transaction('rw', db.adjustments, db.target, async () => {
     await db.adjustments.add({
-      id: newId(),
+      id: adjustmentId,
       date: today,
       previousTarget: decision.previousTarget,
       newTarget: decision.newTarget,
@@ -241,4 +255,6 @@ export async function acceptAdjustment(
       consecutiveUnresponsive: sameDirection ? target.consecutiveUnresponsive + 1 : 1,
     });
   });
+  await touch('adjustments', [adjustmentId]);
+  await touch('target', ['current']);
 }

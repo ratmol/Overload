@@ -7,6 +7,7 @@
  */
 import type { IsoDate, Session, SessionPerformance, SetLog } from '@overload/engine';
 import { db, newId } from './db.js';
+import { touch, tombstone } from './sync-bookkeeping.js';
 
 /**
  * Today as a LOCAL calendar date.
@@ -41,6 +42,7 @@ export async function startSession(
   if (existing) return existing.id;
   const id = newId();
   await db.sessions.add({ id, date, templateId, isDeload });
+  await touch('sessions', [id]);
   return id;
 }
 
@@ -60,6 +62,7 @@ export async function setSessionFlags(
   >,
 ): Promise<void> {
   await db.sessions.update(sessionId, patch);
+  await touch('sessions', [sessionId]);
 }
 
 // ---------------------------------------------------------------------------
@@ -85,11 +88,48 @@ export async function logSet(input: {
     isWarmup: input.isWarmup ?? false,
     timestamp: new Date().toISOString(),
   });
+  await touch('sets', [id]);
   return id;
 }
 
 export async function deleteSet(id: string): Promise<void> {
   await db.sets.delete(id);
+  await tombstone('sets', [id]);
+}
+
+/**
+ * Wipes training history, leaving the program and settings.
+ *
+ * Every removed row gets a tombstone, because this one IS a deliberate
+ * deletion — unlike a JSON import, which replaces the local database without
+ * anybody deciding to delete anything.
+ */
+export async function eraseHistory(): Promise<void> {
+  const [sessions, sets, weights, intake, adjustments] = await Promise.all([
+    db.sessions.toCollection().primaryKeys(),
+    db.sets.toCollection().primaryKeys(),
+    db.weights.toCollection().primaryKeys(),
+    db.intake.toCollection().primaryKeys(),
+    db.adjustments.toCollection().primaryKeys(),
+  ]);
+
+  await db.transaction(
+    'rw',
+    [db.sessions, db.sets, db.weights, db.intake, db.adjustments],
+    async () => {
+      await db.sessions.clear();
+      await db.sets.clear();
+      await db.weights.clear();
+      await db.intake.clear();
+      await db.adjustments.clear();
+    },
+  );
+
+  await tombstone('sessions', sessions as string[]);
+  await tombstone('sets', sets as string[]);
+  await tombstone('weights', weights as string[]);
+  await tombstone('intake', intake as string[]);
+  await tombstone('adjustments', adjustments as string[]);
 }
 
 /** One exercise's sets within one session, in the order they were performed. */
@@ -160,13 +200,16 @@ export async function logWeight(date: IsoDate, weightLb: number): Promise<void> 
   const existing = await db.weights.where('date').equals(date).first();
   if (existing) {
     await db.weights.update(existing.id, { weightLb });
+    await touch('weights', [existing.id]);
     return;
   }
+  const id = newId();
   await db.weights.add({
-    id: newId(),
+    id,
     date,
     weightLb,
     source: 'manual',
     flaggedOutlier: false,
   });
+  await touch('weights', [id]);
 }
