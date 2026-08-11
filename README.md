@@ -5,7 +5,7 @@ calorie engine that explains every number it produces.
 
 No server. No account. No sync. Your data stays in your browser.
 
-**Status:** both halves are built and wired together. 233 tests. The app logs
+**Status:** both halves are built and wired together. 238 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -26,7 +26,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 186 engine + 47 app tests
+npm test           # 186 engine + 52 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -74,8 +74,14 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
 - **Warm-ups logged but counted nowhere** — excluded from the prescription, the
   stall detector and the volume audit. A set you did that the log denies is how
   people stop trusting a logger.
-- **Substitute a lift** when the rack is taken. The substitute carries its own
-  history, so progression picks up where that exercise was last left off.
+- **Swap any lift** for a curated alternate — including single-leg and
+  single-arm variants of the presses, rows and leg work — when the rack is taken
+  or you just are not feeling it. Swaps last one session; next week goes back to
+  the programmed lift on its own. The stand-in keeps its own load history.
+- **Straight-sets mode** for a busy gym, which lengthens the rest rather than
+  pretending a superset's 90s means the same thing run alone.
+- **Type any load, rep count or RIR directly.** Steppers are right for nudging
+  50 to 55 and wrong for 50 to 135.
 - **Deload** as a toggle: halves the sets, drops to ~87.5%, strips the belt from
   bodyweight-loaded lifts. A banner suggests one when the schedule expires or
   two independent fatigue signals appear. A four-tap check-in — sleep, joints,

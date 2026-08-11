@@ -1073,3 +1073,58 @@ dl {
 .volume-row[data-status="over"] .volume-count {
   color: var(--mark);
 }
+
+/* --------------------------------------------------------------------- */
+/* Directly editable stepper values                                       */
+/* --------------------------------------------------------------------- */
+
+/*
+ * The value is an input, not a label. Steppers are right for nudging 50 to 55;
+ * they are wrong for going from 50 to 135, which is nine taps and a reason to
+ * stop using the app. It still has to READ as a printed number rather than a
+ * form field, so the border only appears on focus.
+ */
+input.stepper-value {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 0;
+  letter-spacing: -0.02em;
+  -moz-appearance: textfield;
+}
+
+input.stepper-value::-webkit-outer-spin-button,
+input.stepper-value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input.stepper-value:focus {
+  outline: none;
+  border-color: var(--mark);
+  background: var(--paper);
+}
+
+input.stepper-value:disabled {
+  color: var(--ink-25);
+}
+
+/* A button that reads as part of the sentence it sits in. */
+.link-inline {
+  color: var(--mark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: inherit;
+}
+
+/* A one-line aside that must not push the lift below the fold. */
+.hint-tight {
+  margin-top: 0;
+  margin-bottom: var(--s3);
+}

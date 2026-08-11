@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "name": "Upper/Lower 4-day — program v2, 45 minutes, lean gain block",
   "deloadEveryWeeks": 6,
   "exercises": [
@@ -39,7 +39,11 @@
         1
       ],
       "restSeconds": 90,
-      "supersetGroup": "A"
+      "supersetGroup": "A",
+      "alternates": [
+        "incline-barbell-press",
+        "machine-chest-press"
+      ]
     },
     {
       "id": "weighted-pullup",
@@ -74,7 +78,12 @@
         1
       ],
       "restSeconds": 90,
-      "supersetGroup": "A"
+      "supersetGroup": "A",
+      "alternates": [
+        "assisted-pullup",
+        "wide-grip-pulldown",
+        "single-arm-pulldown"
+      ]
     },
     {
       "id": "weighted-dip",
@@ -107,7 +116,11 @@
         1
       ],
       "restSeconds": 75,
-      "supersetGroup": "B"
+      "supersetGroup": "B",
+      "alternates": [
+        "machine-chest-press",
+        "pec-deck"
+      ]
     },
     {
       "id": "chest-supported-row",
@@ -142,7 +155,12 @@
         1
       ],
       "restSeconds": 75,
-      "supersetGroup": "B"
+      "supersetGroup": "B",
+      "alternates": [
+        "single-arm-db-row",
+        "seated-cable-row",
+        "single-arm-cable-row"
+      ]
     },
     {
       "id": "incline-db-curl",
@@ -185,7 +203,11 @@
       "targetRirBySet": [
         0
       ],
-      "restSeconds": 75
+      "restSeconds": 75,
+      "alternates": [
+        "db-lateral-raise",
+        "machine-lateral-raise"
+      ]
     },
     {
       "id": "prone-y-raise",
@@ -213,7 +235,11 @@
         1
       ],
       "restSeconds": 45,
-      "supersetGroup": "D"
+      "supersetGroup": "D",
+      "alternates": [
+        "band-pull-apart",
+        "face-pull"
+      ]
     },
     {
       "id": "back-squat",
@@ -246,7 +272,12 @@
         2,
         1
       ],
-      "restSeconds": 180
+      "restSeconds": 180,
+      "alternates": [
+        "hack-squat",
+        "goblet-squat",
+        "leg-press"
+      ]
     },
     {
       "id": "romanian-deadlift",
@@ -277,7 +308,12 @@
         2
       ],
       "restSeconds": 90,
-      "supersetGroup": "B"
+      "supersetGroup": "B",
+      "alternates": [
+        "single-leg-rdl",
+        "lying-leg-curl",
+        "seated-leg-curl"
+      ]
     },
     {
       "id": "leg-press",
@@ -305,7 +341,12 @@
         0
       ],
       "restSeconds": 75,
-      "supersetGroup": "C"
+      "supersetGroup": "C",
+      "alternates": [
+        "single-leg-leg-press",
+        "hack-squat",
+        "goblet-squat"
+      ]
     },
     {
       "id": "seated-leg-curl",
@@ -329,7 +370,11 @@
         0
       ],
       "restSeconds": 75,
-      "supersetGroup": "C"
+      "supersetGroup": "C",
+      "alternates": [
+        "lying-leg-curl",
+        "nordic-curl"
+      ]
     },
     {
       "id": "standing-calf-raise",
@@ -352,7 +397,11 @@
         0
       ],
       "restSeconds": 90,
-      "supersetGroup": "B"
+      "supersetGroup": "B",
+      "alternates": [
+        "seated-calf-raise",
+        "leg-press-calf-raise"
+      ]
     },
     {
       "id": "hanging-leg-raise",
@@ -374,7 +423,11 @@
       "targetRirBySet": [
         1
       ],
-      "restSeconds": 45
+      "restSeconds": 45,
+      "alternates": [
+        "captains-chair-leg-raise",
+        "lying-leg-raise"
+      ]
     },
     {
       "id": "barbell-bench-press",
@@ -431,7 +484,12 @@
         1
       ],
       "restSeconds": 75,
-      "supersetGroup": "B"
+      "supersetGroup": "B",
+      "alternates": [
+        "single-arm-cable-row",
+        "single-arm-db-row",
+        "chest-supported-row"
+      ]
     },
     {
       "id": "wide-grip-pulldown",
@@ -465,7 +523,12 @@
         0
       ],
       "restSeconds": 90,
-      "supersetGroup": "A"
+      "supersetGroup": "A",
+      "alternates": [
+        "single-arm-pulldown",
+        "assisted-pullup",
+        "weighted-pullup"
+      ]
     },
     {
       "id": "straight-arm-pulldown",
@@ -491,7 +554,11 @@
       "targetRirBySet": [
         1
       ],
-      "restSeconds": 60
+      "restSeconds": 60,
+      "alternates": [
+        "db-pullover",
+        "single-arm-pulldown"
+      ]
     },
     {
       "id": "low-to-high-cable-fly",
@@ -518,7 +585,11 @@
         0
       ],
       "restSeconds": 60,
-      "supersetGroup": "C"
+      "supersetGroup": "C",
+      "alternates": [
+        "incline-db-fly",
+        "pec-deck"
+      ]
     },
     {
       "id": "reverse-pec-deck",
@@ -544,7 +615,11 @@
         0
       ],
       "restSeconds": 60,
-      "supersetGroup": "C"
+      "supersetGroup": "C",
+      "alternates": [
+        "face-pull",
+        "band-pull-apart"
+      ]
     },
     {
       "id": "face-pull",
@@ -571,7 +646,11 @@
         1
       ],
       "restSeconds": 45,
-      "supersetGroup": "D"
+      "supersetGroup": "D",
+      "alternates": [
+        "reverse-pec-deck",
+        "band-pull-apart"
+      ]
     },
     {
       "id": "deadlift",
@@ -625,7 +704,12 @@
       "targetRirBySet": [
         2
       ],
-      "restSeconds": 90
+      "restSeconds": 90,
+      "alternates": [
+        "walking-lunge",
+        "goblet-squat",
+        "leg-press"
+      ]
     },
     {
       "id": "leg-extension",
@@ -647,7 +731,11 @@
         0
       ],
       "restSeconds": 75,
-      "supersetGroup": "B"
+      "supersetGroup": "B",
+      "alternates": [
+        "single-leg-leg-extension",
+        "hack-squat"
+      ]
     },
     {
       "id": "lying-leg-curl",
@@ -669,7 +757,11 @@
         1
       ],
       "restSeconds": 75,
-      "supersetGroup": "B"
+      "supersetGroup": "B",
+      "alternates": [
+        "seated-leg-curl",
+        "nordic-curl"
+      ]
     },
     {
       "id": "hip-thrust",
@@ -695,7 +787,11 @@
         1
       ],
       "restSeconds": 75,
-      "supersetGroup": "C"
+      "supersetGroup": "C",
+      "alternates": [
+        "cable-pull-through",
+        "glute-bridge"
+      ]
     },
     {
       "id": "seated-calf-raise",
@@ -717,7 +813,11 @@
         0
       ],
       "restSeconds": 75,
-      "supersetGroup": "C"
+      "supersetGroup": "C",
+      "alternates": [
+        "standing-calf-raise",
+        "leg-press-calf-raise"
+      ]
     },
     {
       "id": "incline-barbell-press",
@@ -755,7 +855,11 @@
         1
       ],
       "restSeconds": 90,
-      "supersetGroup": "A"
+      "supersetGroup": "A",
+      "alternates": [
+        "incline-db-press",
+        "machine-chest-press"
+      ]
     },
     {
       "id": "band-pull-apart",
@@ -782,7 +886,595 @@
       "targetRirBySet": [
         1
       ],
-      "restSeconds": 45
+      "restSeconds": 45,
+      "alternates": [
+        "reverse-pec-deck",
+        "face-pull"
+      ]
+    },
+    {
+      "id": "single-leg-leg-press",
+      "name": "Single-leg leg press",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        10,
+        15
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1,
+        1,
+        0
+      ],
+      "restSeconds": 75,
+      "notes": "Per leg. Counts as one set, not two, because both legs are worked within the set. Expect roughly 40-45% of your two-leg load per side, not half."
+    },
+    {
+      "id": "single-leg-leg-extension",
+      "name": "Single-leg leg extension",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        12,
+        20
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 75,
+      "notes": "Per leg. Useful when one side lags, and when every double station is taken."
+    },
+    {
+      "id": "single-leg-rdl",
+      "name": "Single-leg Romanian deadlift",
+      "muscles": [
+        {
+          "muscle": "hamstrings",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        },
+        {
+          "muscle": "lowerBack",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        2
+      ],
+      "restSeconds": 90,
+      "notes": "Per leg. Far less spinal load than the barbell version. Balance limits it before the hamstring does, for the first few sessions."
+    },
+    {
+      "id": "single-arm-db-row",
+      "name": "Single-arm dumbbell row",
+      "muscles": [
+        {
+          "muscle": "upperBack",
+          "fraction": 1
+        },
+        {
+          "muscle": "lats",
+          "fraction": 1
+        },
+        {
+          "muscle": "biceps",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "notes": "Per arm. One dumbbell and a bench, so it is the row that is always available."
+    },
+    {
+      "id": "single-arm-pulldown",
+      "name": "Single-arm lat pulldown",
+      "muscles": [
+        {
+          "muscle": "lats",
+          "fraction": 1
+        },
+        {
+          "muscle": "latsWidth",
+          "fraction": 1
+        },
+        {
+          "muscle": "upperBack",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        10,
+        15
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1,
+        1,
+        0
+      ],
+      "restSeconds": 75,
+      "notes": "Per arm. Full stretch at the top, and better lat isolation than the bar."
+    },
+    {
+      "id": "single-arm-cable-row",
+      "name": "Single-arm cable row",
+      "muscles": [
+        {
+          "muscle": "upperBack",
+          "fraction": 1
+        },
+        {
+          "muscle": "lats",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "rearDelts",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "biceps",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        10,
+        15
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "notes": "Per arm. Needs one cable station instead of two."
+    },
+    {
+      "id": "lying-leg-raise",
+      "name": "Lying leg raise",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        12,
+        20
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 45,
+      "startingLoadLb": 0,
+      "notes": "Floor version of the hanging leg raise. No bar, no grip limit."
+    },
+    {
+      "id": "captains-chair-leg-raise",
+      "name": "Captains chair leg raise",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        10,
+        15
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 45,
+      "startingLoadLb": 0,
+      "notes": "Between the hanging and lying versions. Takes the grip out as the limiter."
+    },
+    {
+      "id": "machine-chest-press",
+      "name": "Machine chest press",
+      "muscles": [
+        {
+          "muscle": "chest",
+          "fraction": 1
+        },
+        {
+          "muscle": "frontDelts",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "triceps",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        2,
+        2,
+        1
+      ],
+      "restSeconds": 90,
+      "notes": "Stand-in for any pressing slot. Lowest systemic cost of the presses."
+    },
+    {
+      "id": "hack-squat",
+      "name": "Hack squat",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 10,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        2,
+        2,
+        1
+      ],
+      "restSeconds": 150,
+      "notes": "Squat pattern with the spine supported. The stand-in when the rack is taken."
+    },
+    {
+      "id": "goblet-squat",
+      "name": "Goblet squat",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        2
+      ],
+      "restSeconds": 120,
+      "notes": "One dumbbell. Light on the spine, self-limiting, always available."
+    },
+    {
+      "id": "walking-lunge",
+      "name": "Walking lunge",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "fraction": 1
+        },
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        10,
+        12
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        2
+      ],
+      "restSeconds": 90,
+      "notes": "Per leg. Stand-in for the Bulgarian split squat when every bench is in use."
+    },
+    {
+      "id": "db-lateral-raise",
+      "name": "Dumbbell lateral raise",
+      "muscles": [
+        {
+          "muscle": "sideDelts",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        12,
+        20
+      ],
+      "defaultSets": 4,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 75,
+      "notes": "Priority 1 lever without a cable. True failure on every set, same as the cable version."
+    },
+    {
+      "id": "machine-lateral-raise",
+      "name": "Machine lateral raise",
+      "muscles": [
+        {
+          "muscle": "sideDelts",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        12,
+        20
+      ],
+      "defaultSets": 4,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 75
+    },
+    {
+      "id": "pec-deck",
+      "name": "Pec deck",
+      "muscles": [
+        {
+          "muscle": "chest",
+          "fraction": 1
+        },
+        {
+          "muscle": "frontDelts",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        12,
+        15
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 60
+    },
+    {
+      "id": "incline-db-fly",
+      "name": "Incline dumbbell fly",
+      "muscles": [
+        {
+          "muscle": "upperChest",
+          "fraction": 1
+        },
+        {
+          "muscle": "chest",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        12,
+        15
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 60,
+      "notes": "Upper-chest stand-in for the low-to-high cable fly."
+    },
+    {
+      "id": "db-pullover",
+      "name": "Dumbbell pullover",
+      "muscles": [
+        {
+          "muscle": "lats",
+          "fraction": 1
+        },
+        {
+          "muscle": "latsWidth",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        12,
+        15
+      ],
+      "defaultSets": 2,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 60,
+      "notes": "Straight-arm pulldown without a cable station."
+    },
+    {
+      "id": "cable-pull-through",
+      "name": "Cable pull-through",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        },
+        {
+          "muscle": "hamstrings",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        12,
+        20
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "notes": "Hip thrust stand-in. No bench, no bar, no setup."
+    },
+    {
+      "id": "glute-bridge",
+      "name": "Glute bridge",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "fraction": 1
+        },
+        {
+          "muscle": "hamstrings",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 10,
+      "defaultRepRange": [
+        12,
+        20
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 75,
+      "startingLoadLb": 0
+    },
+    {
+      "id": "assisted-pullup",
+      "name": "Assisted pull-up",
+      "muscles": [
+        {
+          "muscle": "lats",
+          "fraction": 1
+        },
+        {
+          "muscle": "upperBack",
+          "fraction": 1
+        },
+        {
+          "muscle": "biceps",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        6,
+        10
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        2,
+        2,
+        1
+      ],
+      "restSeconds": 90,
+      "startingLoadLb": 0,
+      "notes": "For a day when the weighted version is not happening. Log belt weight 0 and put the assistance in a note - a negative belt weight would corrupt system load."
+    },
+    {
+      "id": "leg-press-calf-raise",
+      "name": "Leg press calf raise",
+      "muscles": [
+        {
+          "muscle": "calves",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 10,
+      "defaultRepRange": [
+        10,
+        15
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 75,
+      "notes": "Calf work that needs no dedicated machine."
+    },
+    {
+      "id": "nordic-curl",
+      "name": "Nordic ham curl",
+      "muscles": [
+        {
+          "muscle": "hamstrings",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        5,
+        8
+      ],
+      "defaultSets": 3,
+      "targetRirBySet": [
+        1
+      ],
+      "restSeconds": 90,
+      "startingLoadLb": 0,
+      "notes": "Bodyweight hamstring curl. Brutal - start with assistance."
     }
   ],
   "templates": [

@@ -43,15 +43,22 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
     const template = await db.templates.get(templateId);
     if (!template) return null;
 
-    const planned = (await db.exercises.bulkGet(template.exerciseIds)).filter(
+    const session = sessionId ? ((await db.sessions.get(sessionId)) ?? null) : null;
+    const swaps = session?.swaps ?? {};
+
+    // The template is read THROUGH the swap map rather than edited. Swapping is
+    // a decision about today; next week goes back to the programmed lift on its
+    // own, which is what you want when the swap was "the rack was busy".
+    const slots = template.exerciseIds.map((id) => ({ slotId: id, exerciseId: swaps[id] ?? id }));
+    const planned = (await db.exercises.bulkGet(slots.map((s) => s.exerciseId))).filter(
       (e): e is Exercise => !!e,
     );
+    const slotFor = new Map(slots.map((s) => [s.exerciseId, s.slotId]));
 
-    const session = sessionId ? ((await db.sessions.get(sessionId)) ?? null) : null;
     const setCounts = new Map<string, number>();
     const extraIds: string[] = [];
 
-    const plannedIds = new Set(template.exerciseIds);
+    const plannedIds = new Set(slots.map((s) => s.exerciseId));
 
     if (sessionId) {
       for (const s of await db.sets.where('sessionId').equals(sessionId).toArray()) {
@@ -72,7 +79,18 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
     }
 
     const extras = (await db.exercises.bulkGet(extraIds)).filter((e): e is Exercise => !!e);
-    return { template, exercises: [...planned, ...extras], session, setCounts };
+    const originals = await db.exercises.bulkGet([...new Set(Object.keys(swaps))]);
+    return {
+      template,
+      exercises: [...planned, ...extras],
+      session,
+      setCounts,
+      slotFor,
+      swaps,
+      originalById: new Map(
+        originals.filter((e): e is Exercise => !!e).map((e) => [e.id, e]),
+      ),
+    };
   }, [templateId, sessionId, pending]);
 
   if (data === undefined || !sessionId) return <div className="empty">Opening the session…</div>;
@@ -90,7 +108,8 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
     );
   }
 
-  const { template, exercises, session, setCounts } = data;
+  const { template, exercises, session, setCounts, slotFor, swaps, originalById } = data;
+  const supersetsOff = session?.supersetsOff ?? false;
   const index = Math.max(
     0,
     currentId === null ? 0 : exercises.findIndex((e) => e.id === currentId),
@@ -118,6 +137,23 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
           Deload
         </label>
       </div>
+
+      <label className="toggle toggle-inline">
+        <input
+          type="checkbox"
+          checked={supersetsOff}
+          onChange={(e) => void setSessionFlags(sessionId, { supersetsOff: e.target.checked })}
+        />
+        Straight sets — no supersets today
+      </label>
+      {supersetsOff && (
+        <p
+          className="hint hint-tight"
+          title="In a superset the gap between two sets of the same lift is the interval, plus the partner's set, plus the interval again. Keeping 90s while running straight would be a real cut in rest, not a neutral change."
+        >
+          Rest doubled to match. Expect 8–10 minutes longer.
+        </p>
+      )}
 
       <nav className="rail" aria-label="Lifts in this session">
         {exercises.map((e, i) => {
@@ -160,12 +196,25 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
           isDeload={isDeload}
           isLast={index >= exercises.length - 1}
           supersetWith={
-            exercise.supersetGroup === undefined
+            supersetsOff || exercise.supersetGroup === undefined
               ? undefined
               : exercises.find(
                   (e) => e.id !== exercise.id && e.supersetGroup === exercise.supersetGroup,
                 )
           }
+          supersetsOff={supersetsOff}
+          swappedFrom={(() => {
+            const slot = slotFor.get(exercise.id);
+            return slot && slot !== exercise.id ? originalById.get(slot) : undefined;
+          })()}
+          onSwap={(replacementId) => {
+            const slot = slotFor.get(exercise.id) ?? exercise.id;
+            const next = { ...swaps };
+            if (replacementId === null || replacementId === slot) delete next[slot];
+            else next[slot] = replacementId;
+            void setSessionFlags(sessionId, { swaps: next });
+            setCurrentId(replacementId ?? slot);
+          }}
           rest={rest}
           onFinished={() => {
             const next = exercises[index + 1];

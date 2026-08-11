@@ -53,8 +53,11 @@ function weeklyVolume() {
 }
 
 describe('plan.json is program v2', () => {
-  it('is version 2 and parses against the engine schema', () => {
-    expect(plan.version).toBe(2);
+  it('parses against the engine schema', () => {
+    // The FILE version counts migrations, not program revisions — v3 is v2's
+    // program plus the alternates. It only has to move when stored rows need
+    // rewriting, which is what seedIfNeeded keys off.
+    expect(plan.version).toBe(3);
   });
 
   it('runs 75 hard sets a week, the figure the document publishes', () => {
@@ -129,6 +132,63 @@ describe('plan.json is program v2', () => {
         'in-range',
       );
     }
+  });
+
+  it('offers alternates for every lift the program schedules', () => {
+    // "The rack is taken" and "I do not fancy this today" are the two commonest
+    // reasons a session goes badly, and a slot with no alternate is a slot that
+    // gets skipped rather than swapped.
+    for (const id of new Set(plan.templates.flatMap((t) => t.exerciseIds))) {
+      const alternates = byId.get(id)!.alternates ?? [];
+      expect(alternates.length, `${id} has no alternates`).toBeGreaterThan(0);
+    }
+  });
+
+  it('points every alternate at an exercise that exists, and never at itself', () => {
+    // A dangling id is invisible until the moment you are standing in a busy
+    // gym trying to swap out of a lift.
+    for (const exercise of plan.exercises) {
+      for (const alternateId of exercise.alternates ?? []) {
+        expect(byId.has(alternateId), `${exercise.id} -> missing ${alternateId}`).toBe(true);
+        expect(alternateId, `${exercise.id} lists itself`).not.toBe(exercise.id);
+      }
+    }
+  });
+
+  it('gives every alternate the fields the session screen needs', () => {
+    // A swapped-in lift renders through exactly the same code path, so a
+    // missing ladder or rest interval breaks the screen only once you swap.
+    const alternateIds = new Set(plan.exercises.flatMap((e) => e.alternates ?? []));
+    for (const id of alternateIds) {
+      const e = byId.get(id)!;
+      expect(e.targetRirBySet, `${id} has no RIR ladder`).toBeDefined();
+      expect(e.restSeconds, `${id} has no rest interval`).toBeDefined();
+      expect(e.muscles.length, `${id} has no muscles`).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps a unilateral alternate for the lifts most likely to be occupied', () => {
+    // Asked for by name: leg press, leg raises, rows.
+    const unilateral = (id: string, wanted: string) =>
+      expect(byId.get(id)!.alternates ?? [], `${id}`).toContain(wanted);
+    unilateral('leg-press', 'single-leg-leg-press');
+    unilateral('leg-extension', 'single-leg-leg-extension');
+    unilateral('hanging-leg-raise', 'lying-leg-raise');
+    unilateral('chest-supported-row', 'single-arm-db-row');
+    unilateral('seated-cable-row', 'single-arm-cable-row');
+    unilateral('romanian-deadlift', 'single-leg-rdl');
+  });
+
+  it('keeps a unilateral swap worth the same volume as the lift it replaces', () => {
+    // A single-leg press is one set, not two: both legs are worked inside the
+    // set. If it counted double, swapping in a variant on a busy day would
+    // report a volume increase for doing the same work.
+    const bilateral = byId.get('leg-press')!;
+    const single = byId.get('single-leg-leg-press')!;
+    expect(single.defaultSets).toBe(bilateral.defaultSets);
+    const quads = (e: typeof single) =>
+      e.muscles.find((m) => m.muscle === 'quads')!.fraction;
+    expect(quads(single)).toBe(quads(bilateral));
   });
 
   it('leaves direct arm work below target, which the document does not mention', () => {

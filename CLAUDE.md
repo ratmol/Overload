@@ -19,8 +19,8 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 233 tests
-(186 engine, 47 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 238 tests
+(186 engine, 52 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
 the weekly volume audit, and the food-logging groundwork.
 
@@ -96,7 +96,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (186 engine + 47 app)
+npm test                  # vitest, both workspaces (186 engine + 52 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)

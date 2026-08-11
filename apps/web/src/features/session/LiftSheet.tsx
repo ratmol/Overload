@@ -12,6 +12,7 @@ import {
   bodyweightOn,
   deloadPrescription,
   nextPrescription,
+  straightSetRestSeconds,
   systemLoad,
   type Exercise,
   type IsoDate,
@@ -21,6 +22,7 @@ import { deleteSet, logSet, performanceHistory, setsForExerciseInSession } from 
 import { describeSets, formatSystemLoad, lb, shortDate } from '../../lib/format.js';
 import type { RestTimer } from '../../lib/useRestTimer.js';
 import { RestBar } from './RestBar.js';
+import { AddLift } from './AddLift.js';
 import { go } from '../../lib/route.js';
 
 interface PadState {
@@ -44,6 +46,9 @@ export function LiftSheet({
   isDeload,
   isLast,
   supersetWith,
+  supersetsOff,
+  swappedFrom,
+  onSwap,
   rest,
   onFinished,
 }: {
@@ -54,6 +59,12 @@ export function LiftSheet({
   isLast: boolean;
   /** The lift to alternate with, when this one is half of a superset. */
   supersetWith?: Exercise | undefined;
+  /** Running straight sets, so rest is lengthened to compensate. */
+  supersetsOff: boolean;
+  /** The programmed lift this one is standing in for, if any. */
+  swappedFrom?: Exercise | undefined;
+  /** `null` puts the programmed lift back. */
+  onSwap: (replacementId: string | null) => void;
   /**
    * Owned by the session, not by this component.
    *
@@ -66,6 +77,7 @@ export function LiftSheet({
   onFinished: () => void;
 }) {
   const [pad, setPad] = useState<PadState | null>(null);
+  const [swapping, setSwapping] = useState(false);
 
   const data = useLiveQuery(async () => {
     const [logged, history, weights] = await Promise.all([
@@ -101,10 +113,21 @@ export function LiftSheet({
   // Show this lift's interval while idle, so a 90s superset does not read 3:00.
   // In an effect, not in render: the timer's state lives in the parent, and
   // setting it during render is a cross-component update React rejects.
+  // A swapped-in lift usually has no superset group of its own, but it is
+  // filling a slot that did — so the slot's grouping decides whether straight
+  // sets need the longer rest, not the replacement's.
+  const supersettedSlot = exercise.supersetGroup ?? swappedFrom?.supersetGroup;
+  const restSeconds =
+    exercise.restSeconds === undefined
+      ? undefined
+      : supersetsOff && supersettedSlot !== undefined
+        ? straightSetRestSeconds(exercise.restSeconds)
+        : exercise.restSeconds;
+
   const { prime } = rest;
   useEffect(() => {
-    prime(exercise.restSeconds);
-  }, [prime, exercise.restSeconds]);
+    prime(restSeconds);
+  }, [prime, restSeconds]);
 
   if (!data || !prescribed || !pad) return <div className="empty">…</div>;
 
@@ -128,7 +151,7 @@ export function LiftSheet({
     // and then work. Leaving the toggle on is how a whole session gets logged
     // as warm-ups and silently vanishes from the volume audit.
     if (wasWarmup) setPad((p) => ({ ...p!, isWarmup: false }));
-    rest.start(exercise.restSeconds);
+    rest.start(restSeconds);
   }
 
   const step = (patch: Partial<PadState>) => setPad((p) => ({ ...p!, ...patch }));
@@ -156,6 +179,15 @@ export function LiftSheet({
           <p className="superset-note">
             Alternate with <strong>{supersetWith.name}</strong> — rest{' '}
             {exercise.restSeconds ?? 90}s between, not after each.
+          </p>
+        )}
+
+        {swappedFrom && (
+          <p className="superset-note">
+            Standing in for <strong>{swappedFrom.name}</strong> today.{' '}
+            <button className="link-inline" onClick={() => onSwap(null)}>
+              Put it back
+            </button>
           </p>
         )}
 
@@ -278,11 +310,27 @@ export function LiftSheet({
         )}
 
         <div className="btn-row">
+          <button className="btn" data-tone="quiet" onClick={() => setSwapping((v) => !v)}>
+            {swapping ? 'Cancel swap' : 'Swap'}
+          </button>
           <button className="btn" data-tone="quiet" onClick={() => go(`/history/${exercise.id}`)}>
             History
           </button>
         </div>
       </section>
+
+      {swapping && (
+        <AddLift
+          title={`Swap ${exercise.name}`}
+          preferredIds={exercise.alternates ?? []}
+          excludeIds={[exercise.id]}
+          onPick={(id) => {
+            setSwapping(false);
+            onSwap(id);
+          }}
+          onCancel={() => setSwapping(false)}
+        />
+      )}
 
       <section className="pad" aria-label="Log a set">
         <RestBar rest={rest} />
@@ -290,25 +338,33 @@ export function LiftSheet({
         <div className="steppers">
           <Stepper
             label={exercise.isBodyweightLoaded ? 'Belt lb' : 'Load lb'}
-            value={lb(pad.load)}
+            value={pad.load}
+            display={lb(pad.load)}
+            step={exercise.incrementLb}
+            onChange={(load) => step({ load })}
             onDown={() => step({ load: Math.max(0, pad.load - exercise.incrementLb) })}
             onUp={() => step({ load: pad.load + exercise.incrementLb })}
             downDisabled={pad.load <= 0}
           />
           <Stepper
             label="Reps"
-            value={String(pad.reps)}
+            value={pad.reps}
+            step={1}
+            onChange={(reps) => step({ reps: Math.round(reps) })}
             onDown={() => step({ reps: Math.max(0, pad.reps - 1) })}
             onUp={() => step({ reps: pad.reps + 1 })}
             downDisabled={pad.reps <= 0}
           />
           <Stepper
             label="RIR"
-            value={pad.isWarmup ? '—' : String(pad.rir)}
+            value={pad.rir}
+            {...(pad.isWarmup ? { display: '—' } : {})}
+            step={1}
+            disabled={pad.isWarmup}
+            onChange={(rir) => step({ rir: Math.min(10, Math.round(rir)) })}
             onDown={() => step({ rir: Math.max(0, pad.rir - 1) })}
             onUp={() => step({ rir: Math.min(10, pad.rir + 1) })}
-            downDisabled={pad.isWarmup || pad.rir <= 0}
-            upDisabled={pad.isWarmup}
+            downDisabled={pad.rir <= 0}
           />
         </div>
 
@@ -383,29 +439,73 @@ function RirLadder({ rir, done }: { rir: readonly number[]; done: number }) {
 function Stepper({
   label,
   value,
+  display,
+  step,
+  onChange,
   onDown,
   onUp,
   downDisabled,
   upDisabled = false,
+  disabled = false,
 }: {
   label: string;
-  value: string;
+  value: number;
+  display?: string;
+  step: number;
+  onChange: (next: number) => void;
   onDown: () => void;
   onUp: () => void;
   downDisabled: boolean;
   upDisabled?: boolean;
+  disabled?: boolean;
 }) {
+  // Held as a string while focused so half-typed input survives. Committing on
+  // every keystroke would turn "12" into 1 then 12, and a bare "." or "" into
+  // NaN — which is how a logger ends up recording a set you did not do.
+  const [draft, setDraft] = useState<string | null>(null);
+
+  function commit(raw: string) {
+    setDraft(null);
+    const parsed = Number(raw);
+    if (raw.trim() !== '' && Number.isFinite(parsed) && parsed >= 0) onChange(parsed);
+  }
+
   return (
     <div className="stepper">
-      <span className="stepper-label">{label}</span>
-      <span className="stepper-value" aria-live="polite" aria-label={`${label} ${value}`}>
-        {value}
-      </span>
+      <label className="stepper-label" htmlFor={`stepper-${label}`}>
+        {label}
+      </label>
+      <input
+        id={`stepper-${label}`}
+        className="stepper-value"
+        // `text` rather than `number`: the numeric keypad comes from inputMode,
+        // and type=number adds spinners and silently discards input the browser
+        // considers partial.
+        type="text"
+        inputMode="decimal"
+        disabled={disabled}
+        value={draft ?? display ?? String(value)}
+        onFocus={(e) => {
+          setDraft(String(value));
+          // Select-all so the first keystroke replaces rather than appends —
+          // typing 60 into a field showing 50 must not give 5060.
+          requestAnimationFrame(() => e.target.select());
+        }}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') {
+            setDraft(null);
+            e.currentTarget.blur();
+          }
+        }}
+      />
       <div className="stepper-buttons">
-        <button onClick={onDown} disabled={downDisabled} aria-label={`${label} down`}>
+        <button onClick={onDown} disabled={disabled || downDisabled} aria-label={`${label} down ${step}`}>
           −
         </button>
-        <button onClick={onUp} disabled={upDisabled} aria-label={`${label} up`}>
+        <button onClick={onUp} disabled={disabled || upDisabled} aria-label={`${label} up ${step}`}>
           +
         </button>
       </div>

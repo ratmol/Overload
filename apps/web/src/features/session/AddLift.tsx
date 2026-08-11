@@ -1,71 +1,95 @@
 /**
- * Pick a lift that is not in today's template.
+ * Pick a different lift — either a straight addition, or a swap for one the
+ * program prescribed.
  *
- * The squat rack is taken, the cable station is broken, the gym is full. Every
- * paper logbook handles this by writing a different exercise on the line; an
- * app that cannot is an app you stop using in week two.
+ * The squat rack is taken, the cable station is broken, the gym is full, or you
+ * simply do not fancy it today. Every paper logbook handles this by writing a
+ * different exercise on the line; an app that cannot is an app you stop using
+ * in week two.
  *
- * Substituted lifts carry their own history, so the progression state machine
- * picks up wherever that exercise was last left off rather than starting over.
+ * Programmed alternates come first because they were chosen to hit the same
+ * muscles at a similar cost — a swap that quietly halves the day's side-delt
+ * volume is worse than no swap. Everything else stays reachable by search,
+ * because a curated list is a guess about a gym I cannot see.
  */
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import type { Exercise } from '@overload/engine';
 import { db } from '../../db/db.js';
 
 export function AddLift({
+  title = 'Add a lift',
+  preferredIds = [],
   excludeIds,
   onPick,
   onCancel,
 }: {
+  title?: string;
+  /** Programmed alternates, best first. */
+  preferredIds?: readonly string[];
   excludeIds: readonly string[];
   onPick: (exerciseId: string) => void;
   onCancel: () => void;
 }) {
   const [query, setQuery] = useState('');
 
-  const options = useLiveQuery(async () => {
-    const all = await db.exercises.orderBy('name').toArray();
-    const excluded = new Set(excludeIds);
-    return all.filter((e) => !excluded.has(e.id));
-  }, [excludeIds.join(',')]);
+  const all = useLiveQuery(() => db.exercises.orderBy('name').toArray(), []);
+  if (!all) return <div className="empty">…</div>;
 
-  const matches = (options ?? []).filter((e) =>
-    e.name.toLowerCase().includes(query.trim().toLowerCase()),
+  const excluded = new Set(excludeIds);
+  const byId = new Map(all.map((e) => [e.id, e]));
+
+  const preferred = preferredIds
+    .map((id) => byId.get(id))
+    .filter((e): e is Exercise => !!e && !excluded.has(e.id));
+
+  const q = query.trim().toLowerCase();
+  const preferredSet = new Set(preferred.map((e) => e.id));
+  const rest = all.filter(
+    (e) => !excluded.has(e.id) && !preferredSet.has(e.id) && e.name.toLowerCase().includes(q),
   );
+
+  const showPreferred = q === '' && preferred.length > 0;
 
   return (
     <section className="sheet">
-      <p className="eyebrow">Add a lift</p>
-      <div className="field">
-        <label htmlFor="lift-search">Search the program</label>
+      <p className="eyebrow">{title}</p>
+
+      {showPreferred && (
+        <>
+          <p className="hint">
+            Programmed alternates — same muscles, similar cost, so the week's volume holds.
+          </p>
+          <div className="day-list">
+            {preferred.map((e) => (
+              <LiftRow key={e.id} exercise={e} onPick={onPick} />
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="field" style={{ marginTop: 'var(--s4)' }}>
+        <label htmlFor="lift-search">{showPreferred ? 'Or search everything' : 'Search'}</label>
         <input
           id="lift-search"
           type="search"
-          autoFocus
           value={query}
           placeholder="leg press"
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
 
-      {matches.length === 0 ? (
+      {/*
+        With alternates on screen and nothing typed, the rest of the library is
+        just the first six exercises in alphabetical order — noise dressed up as
+        a suggestion. Show it only once there is a query to rank it by.
+      */}
+      {showPreferred && q === '' ? null : rest.length === 0 ? (
         <div className="empty">Nothing matches.</div>
       ) : (
         <div className="day-list">
-          {matches.slice(0, 12).map((e) => (
-            <button key={e.id} className="day-row" onClick={() => onPick(e.id)}>
-              <span>
-                <span className="day-row-name">{e.name}</span>
-                <br />
-                <span className="day-row-meta">
-                  {e.defaultSets} × {e.defaultRepRange[0]}–{e.defaultRepRange[1]} ·{' '}
-                  {e.muscles.map((m) => m.muscle).slice(0, 3).join(', ')}
-                </span>
-              </span>
-              <span className="day-row-go" aria-hidden="true">
-                →
-              </span>
-            </button>
+          {rest.slice(0, 12).map((e) => (
+            <LiftRow key={e.id} exercise={e} onPick={onPick} />
           ))}
         </div>
       )}
@@ -76,5 +100,33 @@ export function AddLift({
         </button>
       </div>
     </section>
+  );
+}
+
+function LiftRow({
+  exercise,
+  onPick,
+}: {
+  exercise: Exercise;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <button className="day-row" onClick={() => onPick(exercise.id)}>
+      <span>
+        <span className="day-row-name">{exercise.name}</span>
+        <br />
+        <span className="day-row-meta">
+          {exercise.defaultSets} × {exercise.defaultRepRange[0]}–{exercise.defaultRepRange[1]} ·{' '}
+          {exercise.muscles
+            .filter((m) => m.fraction === 1)
+            .map((m) => m.muscle)
+            .slice(0, 3)
+            .join(', ')}
+        </span>
+      </span>
+      <span className="day-row-go" aria-hidden="true">
+        →
+      </span>
+    </button>
   );
 }

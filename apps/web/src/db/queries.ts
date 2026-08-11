@@ -49,7 +49,13 @@ export async function setSessionFlags(
   patch: Partial<
     Pick<
       Session,
-      'isDeload' | 'sleepQuality' | 'jointPainFlag' | 'dreadFlag' | 'restingHeartRateBpm'
+      | 'isDeload'
+      | 'sleepQuality'
+      | 'jointPainFlag'
+      | 'dreadFlag'
+      | 'restingHeartRateBpm'
+      | 'swaps'
+      | 'supersetsOff'
     >
   >,
 ): Promise<void> {

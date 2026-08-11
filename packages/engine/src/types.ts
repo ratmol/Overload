@@ -204,9 +204,34 @@ export const Exercise = z.object({
   supersetGroup: z.string().optional(),
   /** Rest after a set of this exercise, seconds. Overrides the global default. */
   restSeconds: z.number().int().positive().optional(),
+  /**
+   * Exercises that can stand in for this one, best first.
+   *
+   * Exists because the two commonest reasons a session goes badly are "the rack
+   * is taken" and "I do not fancy this today", and the honest answer to both is
+   * a different exercise rather than a skipped slot. Alternates keep their own
+   * load history, so swapping back later resumes where that lift left off.
+   */
+  alternates: z.array(Id).optional(),
   notes: z.string().optional(),
 });
 export type Exercise = z.infer<typeof Exercise>;
+
+/**
+ * Rest to use when a superset is run as straight sets instead.
+ *
+ * In a superset the rest between two sets of the SAME exercise is the
+ * prescribed gap, plus the partner's working set, plus the gap again — roughly
+ * `2 x restSeconds` once the partner's set is counted. Running straight sets at
+ * the superset's own 90s would therefore be a real cut in rest, not a neutral
+ * change, and would make the session harder while claiming to make it easier.
+ *
+ * Approximate on purpose. It is capped at five minutes because past that the
+ * session stops fitting in the time it was designed around.
+ */
+export function straightSetRestSeconds(restSeconds: number): number {
+  return Math.min(300, restSeconds * 2);
+}
 
 /**
  * The RIR target for one set, zero-indexed.
@@ -252,6 +277,20 @@ export const Session = z.object({
    * and in practice the trigger people actually act on.
    */
   dreadFlag: z.boolean().optional(),
+  /**
+   * Exercises swapped for this session only, keyed by the id they replace.
+   * The template is untouched — next week goes back to the programmed lift.
+   */
+  swaps: z.record(Id, Id).optional(),
+  /**
+   * Run the session as straight sets.
+   *
+   * A superset needs two stations held at once, which is exactly what a busy
+   * gym will not allow. Rather than silently doing the wrong thing, the session
+   * says it is running straight and lengthens the rest to match — see
+   * `straightSetRestSeconds`.
+   */
+  supersetsOff: z.boolean().optional(),
 });
 export type Session = z.infer<typeof Session>;
 

@@ -430,6 +430,38 @@ falls back to RIR 2.
 
 ---
 
+## 20. Alternates are curated data, and a swap is per-session
+
+`Exercise.alternates` lists stand-ins, best first. `Session.swaps` maps a
+programmed exercise id to what was actually done, for that session only.
+
+**Curated rather than computed.** A "same muscles" search over the library would
+happily offer a lateral raise as a substitute for a pull-up. The alternates were
+chosen to hold the week's volume: swapping a slot must not quietly halve a
+priority muscle. The full library stays reachable by search, because a curated
+list is still a guess about a gym nobody has seen.
+
+**Per-session, not a template edit.** The commonest reason to swap is "the rack
+was busy", which is a fact about today, so next week goes back to the programmed
+lift with no action. The template is read *through* the swap map rather than
+rewritten. A swap survives a reload because it lives on the session row.
+
+**Unilateral variants count as one set, not two.** A single-leg press works both
+legs inside the set, so it carries the same `defaultSets` and the same muscle
+fractions as the bilateral version. Counting it double would report a volume
+increase for doing the same work — pinned by a test.
+
+**Straight sets lengthen the rest.** In a superset the gap between two sets of
+the same lift is the interval, plus the partner's set, plus the interval again.
+Running straight at the superset's own 90s would be a real cut in rest while
+claiming to be a neutral convenience, so `straightSetRestSeconds` doubles it,
+capped at five minutes. A swapped-in lift inherits the grouping of the slot it
+fills, not its own, since a stand-in rarely has a superset group.
+
+**Reversible?** Yes. Both fields are optional and absent on plan v1 and v2 data.
+
+---
+
 <!--
 Template for new entries:
 
