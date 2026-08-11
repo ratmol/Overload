@@ -4,10 +4,12 @@ build/
 coverage/
 .DS_Store
 *.log
-.env
-.env.*
 .vite/
-.vercel/
+
+# Vercel's project link and the OIDC token it writes into .env.local.
+# `.env*` rather than `.env.*` so a bare `.env` is caught too.
+.vercel
+.env*
 
 # Personal data. This repo is public; your weight log is not.
 data/private/
