@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  energyReconciles,
   macrosForGrams,
   proteinAdherence,
   reconcileIntake,
@@ -252,5 +253,53 @@ describe('proteinAdherence', () => {
   it('sums across every row in the day', () => {
     const rows = Array.from({ length: 5 }, (_, i) => entry({ id: `p${i}`, proteinG: 30 }));
     expect(proteinAdherence(rows, 150).met).toBe(true);
+  });
+});
+
+describe('energyReconciles', () => {
+  it('passes a real food label', () => {
+    // Chicken breast, cooked, per 100g: standard USDA-ish figures.
+    const r = energyReconciles({ kcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 });
+    expect(r.reconciles).toBe(true);
+    expect(r.impliedKcal).toBeCloseTo(31 * 4 + 3.6 * 9, 1);
+  });
+
+  it('passes within the default 20% tolerance', () => {
+    // Implied 400, stated 470 -> 17.5% over.
+    const r = energyReconciles({ kcal: 470, proteinG: 40, carbsG: 40, fatG: 8 });
+    expect(r.reconciles).toBe(true);
+  });
+
+  it('fails a barcode data-entry error', () => {
+    // The case from the spec: an absurd macro relative to the stated energy.
+    // 40 kcal stated against 20g of fat (180 implied) is not a rounding issue.
+    const r = energyReconciles({ kcal: 40, proteinG: 0, carbsG: 0, fatG: 20 });
+    expect(r.reconciles).toBe(false);
+    expect(r.differenceFraction).toBeGreaterThan(0.5);
+  });
+
+  it('is signed: reports which direction the stated value is wrong', () => {
+    const over = energyReconciles({ kcal: 1000, proteinG: 10, carbsG: 10, fatG: 10 });
+    expect(over.differenceKcal).toBeGreaterThan(0);
+    const under = energyReconciles({ kcal: 10, proteinG: 10, carbsG: 10, fatG: 10 });
+    expect(under.differenceKcal).toBeLessThan(0);
+  });
+
+  it('does not flag a near-zero-calorie food on fractional noise', () => {
+    // Black coffee: 2 kcal implied, 0 stated. As a FRACTION that is "100%
+    // wrong" and would fail every time on a food that is fine.
+    const r = energyReconciles({ kcal: 0, proteinG: 0, carbsG: 0.5, fatG: 0 });
+    expect(r.reconciles).toBe(true);
+  });
+
+  it('still catches a real error on a near-zero-calorie food, by absolute gap', () => {
+    const r = energyReconciles({ kcal: 200, proteinG: 0, carbsG: 0, fatG: 0 });
+    expect(r.reconciles).toBe(false);
+  });
+
+  it('accepts a wider tolerance when asked', () => {
+    const macros = { kcal: 470, proteinG: 40, carbsG: 40, fatG: 8 }; // 17.5% over
+    expect(energyReconciles(macros, 0.1).reconciles).toBe(false);
+    expect(energyReconciles(macros, 0.25).reconciles).toBe(true);
   });
 });

@@ -10,6 +10,8 @@ coverage/
 # `.env*` rather than `.env.*` so a bare `.env` is caught too.
 .vercel
 .env*
+# ...but the example carries no secrets and documents what is required.
+!.env.example
 
 # Personal data. This repo is public; your weight log is not.
 data/private/

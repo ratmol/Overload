@@ -16,10 +16,11 @@ export type Route =
   | { name: 'volume' }
   | { name: 'body' }
   | { name: 'intake' }
+  | { name: 'foods' }
   | { name: 'setup' }
   | { name: 'data' };
 
-const SIMPLE = ['volume', 'body', 'intake', 'setup', 'data'] as const;
+const SIMPLE = ['volume', 'body', 'intake', 'foods', 'setup', 'data'] as const;
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);

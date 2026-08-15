@@ -186,6 +186,70 @@ export function reconcileIntake(
   return { entries, untaggedDates };
 }
 
+/** kcal per gram, Atwater. Used only to sanity-check a THIRD-PARTY total. */
+const KCAL_PER_G_PROTEIN = 4;
+const KCAL_PER_G_CARB = 4;
+const KCAL_PER_G_FAT = 9;
+
+export interface EnergyCheck {
+  /** kcal implied by 4/4/9 on the given macros. */
+  impliedKcal: number;
+  /** Signed: positive means the stated kcal is higher than the macros imply. */
+  differenceKcal: number;
+  /** |difference| as a fraction of the implied kcal. */
+  differenceFraction: number;
+  reconciles: boolean;
+}
+
+/**
+ * Does a food's stated calorie count roughly match 4/4/9 on its macros?
+ *
+ * This exists for exactly one caller: a barcode lookup against a crowd-sourced
+ * database. Open Food Facts entries are user-submitted and "missing or absurd
+ * macros are common" — see docs/FOOD-LOGGING-SPEC.md §5.2. A product reporting
+ * 40 kcal per 100g and 20g of fat per 100g is not a food, it is a typo, and
+ * saving it verbatim writes a wrong number into every day it gets logged on.
+ *
+ * Manually entered foods are NOT run through this. A user weighing their own
+ * cooked chicken and typing the label's numbers is the ground truth this
+ * project trusts; this check exists to catch a THIRD PARTY's data entry error,
+ * not to second-guess the person doing the logging.
+ *
+ * 20% by default, not tighter: fibre is sometimes excluded from the Atwater sum
+ * on a label, alcohol (7 kcal/g) is not represented here at all, and rounding
+ * on small package sizes compounds fast. The job is to catch "this row is
+ * garbage", not to audit legitimate labelling variance.
+ */
+export function energyReconciles(macros: Macros, toleranceFraction = 0.2): EnergyCheck {
+  const impliedKcal =
+    macros.proteinG * KCAL_PER_G_PROTEIN +
+    macros.carbsG * KCAL_PER_G_CARB +
+    macros.fatG * KCAL_PER_G_FAT;
+
+  const differenceKcal = macros.kcal - impliedKcal;
+
+  // A near-zero-calorie food (water, black coffee) makes any fractional
+  // comparison meaningless — 2 kcal implied vs 0 kcal stated is a 100%
+  // "difference" that is not evidence of anything. Below 20 kcal implied,
+  // pass on the absolute gap instead.
+  if (impliedKcal < 20) {
+    return {
+      impliedKcal,
+      differenceKcal,
+      differenceFraction: 0,
+      reconciles: Math.abs(differenceKcal) <= 20,
+    };
+  }
+
+  const differenceFraction = Math.abs(differenceKcal) / impliedKcal;
+  return {
+    impliedKcal,
+    differenceKcal,
+    differenceFraction,
+    reconciles: differenceFraction <= toleranceFraction,
+  };
+}
+
 export interface ProteinAdherence {
   proteinG: number;
   targetG: number;

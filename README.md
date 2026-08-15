@@ -10,7 +10,7 @@ account — signing in turns sync on, it is not a gate on the product. This
 supersedes an earlier "no server, no account, no sync"; see
 [DECISIONS section 21](docs/DECISIONS.md) for what that cost and why.
 
-**Status:** both halves are built and wired together. 252 tests. The app logs
+**Status:** both halves are built and wired together. 271 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -22,7 +22,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 
 | | |
 |---|---|
-| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 186 tests. **Start here.** |
+| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 193 tests. **Start here.** |
 | [`apps/web`](apps/web) | React PWA. The logger and the dashboard. |
 | [`data/plan.json`](data/plan.json) | The training program as data, not code. Currently program v2. |
 | [`docs/ALGORITHM.md`](docs/ALGORITHM.md) | Every constant and the assumption behind it. |
@@ -31,7 +31,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 186 engine + 66 app tests
+npm test           # 193 engine + 78 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -121,9 +121,17 @@ depended on it.
   than a rest day and one flat number means a surplus on half of them.
 - **Weekly volume audit** against the plan's per-muscle targets, counting hard
   sets only (RIR ≤ 4) and secondaries at half.
+- **A personal food list, with barcode scanning** — not a search over 300k
+  foods. Scan or type a barcode, look it up against Open Food Facts, and
+  every result is confirmed by hand before it is saved; crowd-sourced macros
+  that do not reconcile with the stated energy are flagged rather than
+  trusted. `BarcodeDetector` does not exist on iOS, so the camera path falls
+  back to a WASM decoder — and a typed barcode number works regardless of
+  camera support at all. See [DECISIONS §22](docs/DECISIONS.md).
 
-No food database, no barcode scanner, no AI coach. The engine's job is to
-explain a number, and a language model does not compute a TDEE.
+No searchable food database, no AI coach, no photo recognition of a meal. The
+engine's job is to explain a number, and a language model does not compute a
+TDEE.
 
 ## Deploying it
 

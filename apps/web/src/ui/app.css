@@ -1128,3 +1128,95 @@ input.stepper-value:disabled {
   margin-top: 0;
   margin-bottom: var(--s3);
 }
+
+/* --------------------------------------------------------------------- */
+/* Foods                                                                  */
+/* --------------------------------------------------------------------- */
+
+.food-row {
+  padding: 0;
+  gap: 0;
+}
+
+.food-row-main {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: var(--s3) 0;
+  text-align: left;
+}
+
+.food-fav {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  font-size: var(--step-2);
+  color: var(--ink-25);
+}
+
+.food-fav[data-active="true"] {
+  color: var(--mark);
+}
+
+/* Meal picker: unlike .segmented, these wrap onto a second line rather than
+   clipping — five labels do not fit one row on a phone. */
+.segmented-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.segmented-wrap button {
+  min-height: 2.25rem;
+  padding: 0 var(--s3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  background: var(--paper);
+  color: var(--ink-70);
+  font-size: 0.8125rem;
+}
+
+.segmented-wrap button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper-raised);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------- */
+/* Barcode scanner                                                        */
+/* --------------------------------------------------------------------- */
+
+.scanner-viewport {
+  position: relative;
+  display: none;
+  aspect-ratio: 4 / 3;
+  margin: var(--s3) 0;
+  border-radius: var(--r-sheet);
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.scanner-viewport[data-visible="true"] {
+  display: block;
+}
+
+.scanner-viewport video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The reticle is decorative — it does not crop what gets decoded, the whole
+   frame does. It exists so a phone held loosely still points at the barcode. */
+.scanner-guide {
+  position: absolute;
+  inset: 30% 12%;
+  border: 2px solid var(--mark);
+  border-radius: var(--r-control);
+  opacity: 0.85;
+}
+
+.scanner-manual {
+  margin-top: var(--s3);
+}

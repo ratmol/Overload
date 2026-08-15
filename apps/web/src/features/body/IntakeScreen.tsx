@@ -1,9 +1,11 @@
 /**
  * Intake: import a food log, add a day by hand, tag days shift or off.
  *
- * There is no food database here and there is not going to be one. This app's
- * job is to read what Cronometer or MacroFactor already recorded and turn it
- * into something the engine can estimate from.
+ * Logging individual foods lives on its own screen (`/foods`) — a personal
+ * list plus barcode scanning, not a searchable database. See DECISIONS §16
+ * for why that is in scope now where it was not originally. Days logged there
+ * supersede whatever is imported or typed here for the same date; see
+ * `reconcileIntake` in packages/engine/src/food.ts.
  */
 import { useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -85,6 +87,12 @@ export function IntakeScreen() {
           safe — the days in the file replace the days already stored, rather than stacking on
           top of them and doubling your intake.
         </p>
+
+        <div className="btn-row">
+          <button className="btn" data-tone="quiet" onClick={() => go('/foods')}>
+            Log foods individually instead →
+          </button>
+        </div>
 
         <div className="field">
           <label>Tag these days as</label>

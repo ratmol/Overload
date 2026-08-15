@@ -528,6 +528,64 @@ different project with real duties attached, and is not what this enables.
 
 ---
 
+## 22. Barcode scanning: manual entry is the primary path, not a fallback
+
+Photo/OCR recognition of food was raised and explicitly declined — see §16 and
+`docs/FOOD-LOGGING-SPEC.md` §8, which lists "Photo recognition" and "an AI that
+estimates a meal from a description" under what must not be built, for the same
+reason CLAUDE.md keeps AI out of the calculation path: it produces a specific
+wrong number that looks authoritative. **Barcode scanning was always the
+correct scope** — a barcode is a lookup key, not a guess.
+
+**`BarcodeDetector` does not exist on iOS.** Every iOS browser is WebKit, and
+WebKit has never shipped it. Built against only the native API, this would work
+on a desktop demo and silently fail on the one device that matters. Chosen:
+feature-detect and use it when present (faster, no extra download), fall back
+to `zxing-wasm/reader` otherwise, loaded lazily so nobody who never needs it
+pays for the ~1 MB decoder. Its `.wasm` binary is served from jsDelivr by
+default — no bundler configuration to get wrong, which is exactly the class of
+mistake that broke the Vercel deploy and the Pages workflow earlier.
+
+**The typed barcode field is not a degraded fallback UI — it is the primary
+path**, with the camera as an accelerant. Camera access can be denied, absent,
+or blocked by a non-secure origin (`getUserMedia` requires HTTPS; a LAN test
+over plain http fails this exact way), and none of that may be able to take the
+feature down. Verified: with no camera available at all, the field stays usable
+throughout and the app falls back cleanly with a stated reason, no hang, no
+console error.
+
+**Every lookup outcome — found, suspect, incomplete, or an existing duplicate —
+routes into `AddFoodForm` for a human to confirm before anything is written.**
+One write path for the whole feature. A clean match does not skip the review
+step either: it is one extra tap, in exchange for nobody's food list ever
+getting a row they never looked at.
+
+**`energyReconciles()` (packages/engine) exists only for third-party data.** A
+person weighing their own food and typing the label's numbers is the ground
+truth this project trusts; manually entered macros are never run through it.
+Crowd-sourced Open Food Facts rows are — "missing or absurd macros are common"
+per the food spec — and a row that fails the 4/4/9 check routes to the form
+pre-filled with a stated reason, never a silent save. 20%, not tighter: fibre
+is sometimes excluded from a label's own Atwater sum, alcohol is not
+represented at all, and the job is to catch a wrong row, not to audit
+legitimate labelling variance.
+
+**Verified against the live API, not just fixtures.** Nutella
+(3017620422003) returns 539 kcal / 6.3 g protein per 100 g — checked against a
+direct `curl` of Open Food Facts and matched exactly in the running app.
+Re-scanning the same barcode surfaces the existing row rather than duplicating
+it. An unknown barcode reports not-found cleanly. What was **not** tested here:
+decoding an actual barcode from a live camera feed — this environment has no
+camera and no synthetic-video harness to feed one. The decode calls are
+implemented against the library's documented behaviour, not camera-verified;
+worth a real-device check once deployed.
+
+**Reversible?** Yes. `zxing-wasm` is a single lazy-loaded import behind a
+feature check, and `energyReconciles` is a pure function with no callers
+outside the barcode path.
+
+---
+
 <!--
 Template for new entries:
 

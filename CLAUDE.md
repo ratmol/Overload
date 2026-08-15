@@ -19,10 +19,12 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 252 tests
-(186 engine, 66 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 271 tests
+(193 engine, 78 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
-the weekly volume audit, and the food-logging groundwork.
+the weekly volume audit, sync groundwork (schema + local tracking, no client
+yet), and food logging — a personal list plus barcode scanning against Open
+Food Facts. See DECISIONS §16 and §22.
 
 `data/plan.json` is **program v2** — 75 sets a week, per-set RIR ladders,
 supersets, per-exercise rest. See `PROGRAM-V2.md` one directory up. A plan
@@ -46,9 +48,10 @@ confident the confidence model sounds.
 ## Rules
 
 **Build only what the current stage needs.** The stage gate is now the two open
-acceptance tests above, not a feature list. The app is ahead of its evidence:
-nothing further should be added to the calorie side until real data has been
-through it. Stage 4 (in-app food logging, barcode scanning) remains out.
+acceptance tests above, not a feature list. The app is ahead of its evidence —
+food logging and barcode scanning were pulled forward at explicit request (see
+DECISIONS §16, §22) despite this, which does not change the caveat below: more
+inputs into an unvalidated model is not validation.
 
 **Engine before UI, always.** Every domain rule lands in `packages/engine` with
 a test before any component renders it. If a rule cannot be tested without a
@@ -98,7 +101,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (186 engine + 66 app)
+npm test                  # vitest, both workspaces (193 engine + 78 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -108,12 +111,15 @@ BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
 
 ```
 apps/web/src/
-  db/             Dexie schema, queries, nutrition reads, JSON backup. The only
-                  place that touches IndexedDB — components never do.
-  features/       today, session, history, volume, body, data
+  db/             Dexie schema, queries, nutrition reads, foods, sync
+                  bookkeeping, JSON backup. The only place that touches
+                  IndexedDB — components never do.
+  features/       today, session, history, volume, body, food, data
   ui/             tokens.css, app.css
-  lib/            routing, rest timer, formatting, CSV import
-apps/web/test/    csv parsing, readiness thresholds, and plan.json's own claims
+  lib/            routing, rest timer, formatting, CSV import, Open Food
+                  Facts client, barcode decoding (native + WASM fallback)
+apps/web/test/    csv parsing, readiness thresholds, plan.json's own claims,
+                  Open Food Facts parsing, sync bookkeeping
 packages/engine/src/
   types.ts        Zod schemas. Single source of truth. No logic.
   dates.ts        UTC calendar-date arithmetic. All date math goes here.
@@ -123,9 +129,11 @@ packages/engine/src/
   progression.ts  System load + double progression state machine
   deload.ts       Trigger detection
   volume.ts       Weekly hard-set audit per muscle
-  food.ts         Portion maths + the foodLog/intake reconciliation seam
+  food.ts         Portion maths, foodLog/intake reconciliation, macro-energy
+                  validation for third-party (barcode) data
 data/plan.json    The training program as data, not code.
 docs/             ALGORITHM.md (assumptions), DECISIONS.md (ADR-lite)
+supabase/         SQL migrations. RLS-forced schema, no client wired up yet.
 ```
 
 ## Things that are easy to get wrong here
