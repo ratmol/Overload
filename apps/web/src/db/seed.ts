@@ -72,6 +72,9 @@ export async function seedIfNeeded(): Promise<SeedResult> {
       version: PLAN.version,
       name: PLAN.name,
       deloadEveryWeeks: PLAN.deloadEveryWeeks,
+      ...(PLAN.deloadEverySessions === undefined
+        ? {}
+        : { deloadEverySessions: PLAN.deloadEverySessions }),
       templateOrder: PLAN.templates.map((t) => t.id),
       volumeTargets: PLAN.volumeTargets,
       seededAt: new Date().toISOString(),

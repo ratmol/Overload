@@ -7,6 +7,7 @@
  */
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
+  accumulationSessionsSince,
   daysBetween,
   detectDeload,
   isStalled,
@@ -75,6 +76,15 @@ export function DeloadNotice({
       rirDriftPerSession: worstDrift,
       recentSessions: sessions.filter((s) => daysBetween(s.date, today) <= 21),
       ...(baseline === null ? {} : { baselineRestingHeartRateBpm: baseline }),
+      // Session-counted scheduling for a rolling program. Both fields must be
+      // present together or detectDeload falls back to the calendar-week
+      // check — see rotation.ts and DECISIONS §24.
+      ...(plan.deloadEverySessions === undefined
+        ? {}
+        : {
+            deloadEverySessions: plan.deloadEverySessions,
+            sessionsSinceBlockStart: accumulationSessionsSince(sessions, blockStartDate),
+          }),
     });
   }, [today, sessions]);
 

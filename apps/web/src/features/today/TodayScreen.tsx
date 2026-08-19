@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { daysBetween } from '@overload/engine';
+import { daysBetween, dueForRest, nextInRotation } from '@overload/engine';
 import { db } from '../../db/db.js';
 import { todayIso } from '../../db/queries.js';
 import { go } from '../../lib/route.js';
@@ -15,6 +15,7 @@ export function TodayScreen() {
     const stored = await db.templates.toArray();
     // Program order, not alphabetical. Anything not in the plan's list (an
     // exercise day added by hand) sorts to the end rather than disappearing.
+    // It also doubles as the ROTATION order for a rolling program.
     const order = plan?.templateOrder ?? [];
     const templates = [...stored].sort(
       (a, b) =>
@@ -26,12 +27,19 @@ export function TodayScreen() {
     for (const s of await db.sets.toArray()) {
       setCounts.set(s.sessionId, (setCounts.get(s.sessionId) ?? 0) + 1);
     }
-    return { templates, sessions, plan, setCounts };
+    return {
+      templates,
+      sessions,
+      plan,
+      setCounts,
+      next: nextInRotation(order, sessions).templateId,
+      restDue: dueForRest(sessions, today),
+    };
   }, [today]);
 
   if (!data) return <div className="empty">Opening the logbook…</div>;
 
-  const { templates, sessions, plan, setCounts } = data;
+  const { templates, sessions, plan, setCounts, next, restDue } = data;
 
   return (
     <main>
@@ -45,6 +53,16 @@ export function TodayScreen() {
 
       <WeighIn date={today} />
 
+      {restDue && (
+        <div className="notice" role="status">
+          <strong>Two training days in a row</strong>
+          <p className="hint">
+            The one non-negotiable rule of a rolling program: never three in a row. Shift the
+            rest day rather than skip it — the queue does not mind waiting.
+          </p>
+        </div>
+      )}
+
       <section className="sheet">
         <p className="eyebrow">Train</p>
         <div className="day-list">
@@ -53,6 +71,7 @@ export function TodayScreen() {
             const last = forTemplate[forTemplate.length - 1];
             const open = last?.date === today;
             const loggedToday = open ? (setCounts.get(last.id) ?? 0) : 0;
+            const isNext = t.id === next;
             return (
               <button
                 key={t.id}
@@ -61,7 +80,14 @@ export function TodayScreen() {
                 onClick={() => go(`/session/${t.id}/${today}`)}
               >
                 <span>
-                  <span className="day-row-name">{t.name}</span>
+                  <span className="day-row-name">
+                    {t.name}
+                    {isNext && !open && (
+                      <span className="badge day-row-badge" aria-label="Next in rotation">
+                        Next
+                      </span>
+                    )}
+                  </span>
                   <br />
                   <span className="day-row-meta">
                     {t.exerciseIds.length} lifts
@@ -79,6 +105,10 @@ export function TodayScreen() {
             );
           })}
         </div>
+        <p className="hint">
+          &ldquo;Next&rdquo; is a recommendation, not a rule — the rotation is a queue, not a
+          calendar. Any day still opens whatever you tap.
+        </p>
       </section>
     </main>
   );

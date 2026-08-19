@@ -24,6 +24,18 @@ export interface DeloadInputs {
   blockStartDate: IsoDate;
   /** From plan.json. Default 7. */
   deloadEveryWeeks: number;
+  /**
+   * Session-counted scheduling, for a rolling program not tied to the
+   * calendar. When BOTH this and `sessionsSinceBlockStart` are given, they
+   * decide "scheduled" instead of the calendar-day check — a program built
+   * around "next session, not Monday" should not have its recovery timer run
+   * on a clock the program itself ignores. Omit either one to keep the
+   * original calendar-day behaviour.
+   */
+  deloadEverySessions?: number;
+  /** Non-deload sessions since `blockStartDate`. See `accumulationSessionsSince`
+   *  in rotation.ts, which is what should produce this number. */
+  sessionsSinceBlockStart?: number;
   /** Exercise ids flagged stalled within the trailing 7 days. */
   stalledExerciseIds: readonly string[];
   /** Mean RIR change per session at constant load, from progression.ts. */
@@ -126,7 +138,11 @@ export function detectDeload(
   const signals: DeloadSignal[] = [];
 
   const daysIntoBlock = daysBetween(inputs.blockStartDate, inputs.today);
-  const scheduled = daysIntoBlock >= inputs.deloadEveryWeeks * 7;
+  const sessionCounted =
+    inputs.deloadEverySessions !== undefined && inputs.sessionsSinceBlockStart !== undefined;
+  const scheduled = sessionCounted
+    ? inputs.sessionsSinceBlockStart! >= inputs.deloadEverySessions!
+    : daysIntoBlock >= inputs.deloadEveryWeeks * 7;
   if (scheduled) signals.push('scheduled');
 
   if (inputs.stalledExerciseIds.length >= o.stallCountThreshold) {
@@ -190,13 +206,22 @@ function buildReason(
   daysIntoBlock: number,
   inputs: DeloadInputs,
 ): string {
+  const sessionCounted =
+    inputs.deloadEverySessions !== undefined && inputs.sessionsSinceBlockStart !== undefined;
+
   if (!recommend) {
-    return fatigue.length === 1
-      ? `One fatigue signal (${label(fatigue[0]!, inputs)}). Two are needed to pull a deload forward. Watch it.`
+    if (fatigue.length === 1) {
+      return `One fatigue signal (${label(fatigue[0]!, inputs)}). Two are needed to pull a deload forward. Watch it.`;
+    }
+    return sessionCounted
+      ? `Session ${inputs.sessionsSinceBlockStart} of ${inputs.deloadEverySessions} this block. No deload indicated.`
       : `Week ${Math.floor(daysIntoBlock / 7) + 1} of ${inputs.deloadEveryWeeks}. No deload indicated.`;
   }
   if (scheduled) {
-    return `Scheduled deload: ${Math.floor(daysIntoBlock / 7)} weeks of accumulation complete. Halve the sets, 85-90% load, strip belt weight from dips and pull-ups, keep calories the same.`;
+    const accumulation = sessionCounted
+      ? `${inputs.sessionsSinceBlockStart} sessions of accumulation complete`
+      : `${Math.floor(daysIntoBlock / 7)} weeks of accumulation complete`;
+    return `Scheduled deload: ${accumulation}. Halve the sets, 85-90% load, strip belt weight from dips and pull-ups, keep calories the same.`;
   }
   return `Pulling the deload forward: ${fatigue.map((s) => label(s, inputs)).join(' and ')}. Halve the sets, 85-90% load, bodyweight only on dips and pull-ups, calories unchanged.`;
 }

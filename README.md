@@ -10,7 +10,7 @@ account — signing in turns sync on, it is not a gate on the product. This
 supersedes an earlier "no server, no account, no sync"; see
 [DECISIONS section 21](docs/DECISIONS.md) for what that cost and why.
 
-**Status:** both halves are built and wired together. 271 tests. The app logs
+**Status:** both halves are built and wired together. 295 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -24,14 +24,14 @@ the confidence model as a description of the engine's own opinion, not evidence.
 |---|---|
 | [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 193 tests. **Start here.** |
 | [`apps/web`](apps/web) | React PWA. The logger and the dashboard. |
-| [`data/plan.json`](data/plan.json) | The training program as data, not code. Currently program v2. |
+| [`data/plan.json`](data/plan.json) | The training program as data, not code. Currently program v3 — a rolling cycle, not a fixed week. |
 | [`docs/ALGORITHM.md`](docs/ALGORITHM.md) | Every constant and the assumption behind it. |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Irreversible calls and what they cost. |
 
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 193 engine + 78 app tests
+npm test           # 217 engine + 78 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -60,6 +60,12 @@ for it can be generated.
 
 One screen per lift, sized so nothing scrolls while a set is in progress.
 
+- **A rolling rotation, not a weekly split.** Upper A, Lower A, Upper B,
+  Lower B, repeat — "next session", not "Monday's workout". A bad shift
+  becomes the rest day and the queue keeps its place; there is no week to fall
+  behind in. The app marks the recommended next day and nudges — never
+  blocks — after two training days running, since three in a row is the one
+  rule the program treats as non-negotiable.
 - **The prescription before the set, not after.** Double progression, computed
   from the last two sessions: all sets at the top of the range adds an
   increment, otherwise chase reps at the same load, and two flat transitions in
@@ -88,8 +94,10 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
 - **Type any load, rep count or RIR directly.** Steppers are right for nudging
   50 to 55 and wrong for 50 to 135.
 - **Deload** as a toggle: halves the sets, drops to ~87.5%, strips the belt from
-  bodyweight-loaded lifts. A banner suggests one when the schedule expires or
-  two independent fatigue signals appear. A four-tap check-in — sleep, joints,
+  bodyweight-loaded lifts. A banner suggests one when the schedule expires — by
+  session count, not calendar weeks, since the rotation does not run on a
+  fixed week either — or two independent fatigue signals appear. A four-tap
+  check-in — sleep, joints,
   resting heart rate, dread — feeds the signals that fire *before* performance
   drops. The heart-rate baseline is derived from your own history, excluding the
   last two weeks, because a baseline that includes the elevation it is looking

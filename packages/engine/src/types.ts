@@ -412,6 +412,14 @@ export const Plan = z.object({
   volumeTargets: z.array(VolumeTarget),
   /** Weeks of accumulation before a scheduled deload. */
   deloadEveryWeeks: z.number().int().positive(),
+  /**
+   * Sessions of accumulation before a scheduled deload, for a rolling program
+   * that is not tied to the calendar (see `rotation.ts`). When present,
+   * `detectDeload` prefers this over `deloadEveryWeeks` — a program built
+   * around "the next session", not "Monday", should not have its recovery
+   * timer run on a clock the program itself ignores.
+   */
+  deloadEverySessions: z.number().int().positive().optional(),
 });
 export type Plan = z.infer<typeof Plan>;
 

@@ -19,17 +19,27 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 271 tests
-(193 engine, 78 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 295 tests
+(217 engine, 78 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
 the weekly volume audit, sync groundwork (schema + local tracking, no client
 yet), and food logging — a personal list plus barcode scanning against Open
 Food Facts. See DECISIONS §16 and §22.
 
-`data/plan.json` is **program v2** — 75 sets a week, per-set RIR ladders,
-supersets, per-exercise rest. See `PROGRAM-V2.md` one directory up. A plan
-version bump now overwrites existing exercises (DECISIONS §18); it used to be
-additive-only, which made v2 undeliverable.
+`data/plan.json` is **program v3** — a rolling Upper A / Lower A / Upper B /
+Lower B cycle, ~60 sets per 6-day rotation, per-set RIR ladders, supersets,
+per-exercise rest, deload counted by session rather than calendar week. See
+`PROGRAM-V3.md` one directory up, and DECISIONS §23-24 for what the app layer
+had to learn to support a program with no fixed week. A plan version bump
+overwrites existing exercises (DECISIONS §18); it used to be additive-only,
+which made v2 undeliverable.
+
+**`apps/web/test/plan.test.ts` found real numbers the program document's own
+summary table does not match** — chest, upper back and calves all land
+slightly under their target minimums as v3 is literally specified, which the
+document's hand-computed table does not show. Recorded as explicit
+"REGRESSION" tests rather than silently fixed. Worth a look before assuming
+the volume screen reads green.
 
 **Two acceptance tests are still open, and neither is a coding task:**
 
@@ -101,7 +111,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (193 engine + 78 app)
+npm test                  # vitest, both workspaces (217 engine + 78 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -128,6 +138,7 @@ packages/engine/src/
   adjust.ts       Calorie target adjustment + guardrails
   progression.ts  System load + double progression state machine
   deload.ts       Trigger detection
+  rotation.ts     Next-in-rotation + rest-day rule for a program with no week
   volume.ts       Weekly hard-set audit per muscle
   food.ts         Portion maths, foodLog/intake reconciliation, macro-energy
                   validation for third-party (barcode) data

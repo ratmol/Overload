@@ -293,6 +293,15 @@ h2 {
   gap: var(--s2);
 }
 
+/* Sits inline after a day's name rather than in its own row — the rotation's
+   recommendation is a footnote to the name, not a status the row is in. */
+.day-row-badge {
+  margin-left: var(--s2);
+  border-color: var(--mark);
+  color: var(--mark);
+  vertical-align: middle;
+}
+
 /* --------------------------------------------------------------------- */
 /* The RIR ladder                                                         */
 /* --------------------------------------------------------------------- */

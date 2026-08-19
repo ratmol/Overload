@@ -37,9 +37,20 @@ export interface PlanMeta {
   name: string;
   deloadEveryWeeks: number;
   /**
+   * Sessions of accumulation before a scheduled deload, for a rolling program
+   * with no fixed week. When set, this is what `detectDeload` uses instead of
+   * `deloadEveryWeeks` — see rotation.ts and DECISIONS §24.
+   */
+  deloadEverySessions?: number;
+  /**
    * Template ids in program order — Upper A, Lower A, Upper B, Lower B.
    * Dexie returns rows in primary-key order, which is alphabetical, and an
    * alphabetical week is not the week the plan prescribes.
+   *
+   * Doubles as the ROTATION order for a rolling program (`nextInRotation` in
+   * rotation.ts): there is no separate field for it because this one already
+   * is the sequence the plan defines, and a second field holding the same
+   * list would just be a second place for it to drift out of sync.
    */
   templateOrder: string[];
   /** Kept as-is for Stage 3's volume audit. Not read in Stage 1. */

@@ -586,6 +586,89 @@ outside the barcode path.
 
 ---
 
+## 23. The rotation is derived, not stored — `templateOrder` already was it
+
+PROGRAM-V3.md replaces the fixed weekly split with a rolling cycle: Upper A,
+Lower A, rest, Upper B, Lower B, rest, repeat — "a queue, not a calendar."
+The document's own closing note assumed this needed new schema: *"there's no
+cycle position... you'd need a `cyclePosition` on the plan."*
+
+**It doesn't.** `templateOrder` (§14) already records the plan's templates in
+program order, for display sorting. That ordered list — `['upper-a',
+'lower-a', 'upper-b', 'lower-b']` — **is** the rotation sequence. "What's
+next" is a pure function of that list and the session history: find the most
+recent session whose template is in the rotation, advance one position, wrap.
+`nextInRotation()` (`packages/engine/src/rotation.ts`) does exactly this and
+nothing is stored that was not already there — consistent with §5, nothing
+derived is stored.
+
+**A second explicit "cycle position" field was the alternative, and it is
+worse**, not just unnecessary: it can drift from the session history (log a
+session out of sequence and the stored position lies about what actually
+happened) in a way a value recomputed from history every time cannot.
+
+**The recommendation, not a gate.** `TodayScreen` marks the recommended
+template with a "Next" badge but every template stays one tap away — the same
+philosophy as exercise swaps. A rolling program that *forced* sequence would
+fight the exact flexibility problem it exists to solve (PPL notes: "same
+system over and over" was the complaint; a rigid rotation is a different
+flavour of the same rigidity).
+
+**`dueForRest()` implements the one rule the document treats as
+non-negotiable** — "never three training days in a row" — as a nudge, not a
+block, for the same reason.
+
+**Reversible?** Yes. Both functions are pure, take plain arrays, and are not
+called from anywhere that would need to change if the rotation model changes
+again.
+
+---
+
+## 24. Deload counted by session, not by calendar week — 24 sessions, my call
+
+A rolling program's own logic is that a week is not a meaningful unit — see
+§23. The pre-existing deload timer (`deloadEveryWeeks`, `daysBetween(...) >=
+weeks * 7`) measures exactly the thing the program now ignores. PROGRAM-V3.md
+does not give a session-counted replacement number; the gap is mine to fill,
+and it is written down here rather than picked silently.
+
+**Chosen: `deloadEverySessions: 24`.** Four templates per full rotation, so 24
+sessions is exactly six complete rotations — the same session-based logic v2's
+"deload every 6 weeks" was already approximating (6 weeks x 4 sessions/week =
+24 sessions, coincidentally the same number under the old fixed schedule). At
+v3's ~4.7 sessions/week this lands the deload around week 5, slightly sooner
+in calendar time than v2 — defensible, since v3's sessions individually run
+lighter (69 sets/week vs 75) but arrive more often, and accumulated-session
+count is a more direct proxy for fatigue than calendar time either way.
+
+**The alternative was scaling to preserve v2's ~6-week calendar cadence**
+(≈28 sessions). Not chosen: it optimises for a number the whole point of a
+rolling program is to stop optimising for.
+
+**`detectDeload` gained `deloadEverySessions` / `sessionsSinceBlockStart` as
+an OPTIONAL pair, additive to the existing calendar fields, not a
+replacement.** When both are supplied, session count decides "scheduled" and
+the calendar check is bypassed entirely — verified live: a fixture with
+5 sessions and calendar time far past `deloadEveryWeeks * 7` still declines to
+fire. When either is missing, behaviour is byte-for-byte what it was before;
+every one of the 22 pre-existing tests passes unmodified. A plan with no
+`deloadEverySessions` — anything on program v1 or v2's schema — never sees the
+new code path at all.
+
+`accumulationSessionsSince()` counts sessions on or after the block start,
+inclusive. That boundary is deliberately inclusive rather than exclusive: on
+the very first block it is the date of the first real session, which must
+count, and on every later block it is the date of the deload that started the
+block, which the `isDeload` filter already excludes regardless — so inclusive
+is safe in both cases without a second code path to keep in sync. Both
+directions are pinned by tests.
+
+**Reversible?** The number, trivially — it is one field in `plan.json`. The
+additive schema change, yes at no cost: nothing currently depends on the
+session-counted fields existing.
+
+---
+
 <!--
 Template for new entries:
 

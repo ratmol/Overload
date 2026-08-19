@@ -250,3 +250,59 @@ describe('restingHrBaseline', () => {
     expect(restingHrBaseline(sessions, today)).toBe(58);
   });
 });
+
+describe('detectDeload — session-counted scheduling', () => {
+  const sessionCountedBase: DeloadInputs = {
+    ...base,
+    deloadEverySessions: 24,
+    sessionsSinceBlockStart: 0,
+  };
+
+  it('does not fire before the session count is reached', () => {
+    const r = detectDeload({ ...sessionCountedBase, sessionsSinceBlockStart: 23 });
+    expect(r.recommend).toBe(false);
+    expect(r.reason).toContain('Session 23 of 24');
+  });
+
+  it('fires once the session count is reached, even with days to spare', () => {
+    // blockStartDate is only 3 days before today in `base` — the calendar
+    // check alone would never fire this quickly. Session count is what
+    // decides for a rolling program.
+    const r = detectDeload({ ...sessionCountedBase, sessionsSinceBlockStart: 24 });
+    expect(r.recommend).toBe(true);
+    expect(r.signals).toContain('scheduled');
+    expect(r.reason).toContain('24 sessions of accumulation complete');
+  });
+
+  it('ignores the calendar-day check once session counting is active', () => {
+    // Plenty of calendar days elapsed (deloadEveryWeeks*7 would have fired
+    // long ago) but nowhere near enough SESSIONS — must not fire.
+    const r = detectDeload({
+      ...sessionCountedBase,
+      blockStartDate: '2026-01-01',
+      today: '2026-09-01',
+      sessionsSinceBlockStart: 5,
+    });
+    expect(r.recommend).toBe(false);
+  });
+
+  it('falls back to the calendar-day check when either session field is missing', () => {
+    // deloadEverySessions given but no count supplied: must not silently
+    // treat `undefined >= 24` as anything other than "not session-counted".
+    const onlyThreshold = detectDeload({
+      ...base,
+      deloadEverySessions: 24,
+      blockStartDate: '2026-01-01',
+      today: '2026-09-01', // far past deloadEveryWeeks*7 in `base` (7 weeks)
+    });
+    expect(onlyThreshold.recommend).toBe(true);
+    expect(onlyThreshold.reason).toContain('weeks of accumulation');
+  });
+
+  it('a legacy plan with no session fields behaves exactly as before', () => {
+    // No regression for every existing caller that never learns about this.
+    const r = detectDeload(base);
+    expect(r.recommend).toBe(false);
+    expect(r.reason).toMatch(/^Week \d+ of \d+\. No deload indicated\.$/);
+  });
+});
