@@ -738,6 +738,42 @@ exercise is unaffected.
 <!--
 Template for new entries:
 
+## 27. A persona review found a real bug: the pad ignored a deload toggled after mount
+
+A month-long usage review (real interaction plus seeded history, not just
+unit tests) found `LiftSheet`'s pad silently ignoring a deload toggled after
+the lift had already rendered. The prescription card correctly recomputed
+and displayed `2 × 6–10 @ 50 lb, RIR 4/4`; the pad underneath it — the thing
+that actually gets logged on a tap — kept showing the pre-deload numbers,
+`55 lb, RIR 2`, because the seed-once effect's guard (`if (pad !== null)
+return`) does exactly what its comment says and never re-fires once `pad`
+is set, even though `prescribed` is nominally a dependency. Tapping Log in
+that state would have recorded a full-intensity set while the screen
+implied a deload one.
+
+**Fixed with a second, narrower effect**: `setPad(null)` on `[isDeload]`,
+which lets the existing seed effect do its normal job on the next render.
+This is the one case allowed to override "seed once and leave it alone" —
+the prescription itself changed, not just the object identity of it.
+Verified by reproducing the exact scenario (a real prior session's numbers
+loaded, then deload toggled) and confirming the pad's load and RIR match the
+prescription card afterward.
+
+**Why a full review caught this and the test suite did not**: nothing in
+`packages/engine` is wrong — `deloadPrescription` returns the right numbers
+every time, proven by its own tests. The bug lived entirely in when a React
+effect chooses to re-run, which only exists at runtime in a mounted
+component. Same shape as §26's hooks-order crash: this project's tests cover
+engine logic and are deliberately sparse on component behaviour (CLAUDE.md),
+so this class of bug is caught by driving the real app, not by `npm test`.
+
+**Reversible?** Yes, two-line change, no schema or data implication.
+
+---
+
+<!--
+Template for new entries:
+
 ## N. <the decision, stated as a claim>
 
 <what was chosen, and the one or two alternatives that were real>

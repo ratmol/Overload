@@ -3,6 +3,13 @@
  *
  * There is no server, so there is no "restore from account". The export file is
  * the only backup that exists and the screen says so in those words.
+ *
+ * TRUE TODAY, NOT PERMANENT: the "No server, no account, nothing leaves the
+ * device" copy below is accurate only because the sync client has not been
+ * built yet (DECISIONS §21 — schema and local bookkeeping exist, push/pull
+ * does not). The moment that client ships this becomes false for anyone who
+ * signs in, and this file is the one place that sentence lives — search for
+ * it here, not just in the README, when that day comes.
  */
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';

@@ -99,6 +99,17 @@ export function LiftSheet({
   const base = data ? nextPrescription(exercise, data.history) : null;
   const prescribed = base && isDeload ? { ...base, ...deloadPrescription(exercise, base) } : base;
 
+  // Toggling deload mid-lift changes the PRESCRIPTION (the card above the
+  // pad already updates) but must also change what the pad offers to log —
+  // otherwise the screen shows "2 x 6-10 @ 50 lb, RIR 4" while the pad still
+  // holds the pre-deload numbers, and a tap on Log records the wrong set
+  // under a label that says it is the right one. Forcing a re-seed here is
+  // the one case allowed to override "seed once and leave it alone" below:
+  // the prescription itself changed, not just the object identity of it.
+  useEffect(() => {
+    setPad(null);
+  }, [isDeload]);
+
   // Seed the pad from the prescription once, then leave it alone — retyping a
   // load you already dialled in, because a background query re-ran, is the
   // fastest way to make a logger untrustworthy mid-set.
