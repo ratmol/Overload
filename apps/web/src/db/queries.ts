@@ -57,6 +57,7 @@ export async function setSessionFlags(
       | 'dreadFlag'
       | 'restingHeartRateBpm'
       | 'swaps'
+      | 'skips'
       | 'supersetsOff'
     >
   >,

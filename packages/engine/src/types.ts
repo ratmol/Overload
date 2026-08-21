@@ -214,6 +214,14 @@ export const Exercise = z.object({
    */
   alternates: z.array(Id).optional(),
   notes: z.string().optional(),
+  /**
+   * True for an exercise the user added themselves, as opposed to one seeded
+   * from `data/plan.json`. Exists so the app can tell the two apart — a
+   * custom row is never touched by a plan migration (§18 only overwrites ids
+   * plan.json defines) and is never at risk of being renamed out from under
+   * the person who created it.
+   */
+  custom: z.boolean().optional(),
 });
 export type Exercise = z.infer<typeof Exercise>;
 
@@ -282,6 +290,15 @@ export const Session = z.object({
    * The template is untouched — next week goes back to the programmed lift.
    */
   swaps: z.record(Id, Id).optional(),
+  /**
+   * Programmed slot ids dropped from THIS session — running low on time or
+   * too tired for everything on the sheet. Keyed the same way as `swaps`
+   * (the slot id, i.e. the exercise the template originally names), so a
+   * slot cannot be both swapped and skipped without one silently winning;
+   * the app checks skips first. The template itself is untouched: next
+   * session the slot is back, same as a swap reverting on its own.
+   */
+  skips: z.array(Id).optional(),
   /**
    * Run the session as straight sets.
    *

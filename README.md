@@ -10,7 +10,7 @@ account — signing in turns sync on, it is not a gate on the product. This
 supersedes an earlier "no server, no account, no sync"; see
 [DECISIONS section 21](docs/DECISIONS.md) for what that cost and why.
 
-**Status:** both halves are built and wired together. 295 tests. The app logs
+**Status:** both halves are built and wired together. 300 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -31,7 +31,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 217 engine + 78 app tests
+npm test           # 217 engine + 83 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -89,6 +89,13 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
   single-arm variants of the presses, rows and leg work — when the rack is taken
   or you just are not feeling it. Swaps last one session; next week goes back to
   the programmed lift on its own. The stand-in keeps its own load history.
+- **Add an exercise the library does not have.** A quick form — name, muscles
+  worked, sets and rep range — reachable from the same picker as a swap. It is
+  immediately swappable, searchable and loggable, through the same code path
+  as every plan-seeded lift.
+- **Skip a lift for today** when time or energy runs out, offered before you
+  have logged anything against it. It comes back on its own next time that
+  slot is due — the program is never edited, only today is.
 - **Straight-sets mode** for a busy gym, which lengthens the rest rather than
   pretending a superset's 90s means the same thing run alone.
 - **Type any load, rep count or RIR directly.** Steppers are right for nudging

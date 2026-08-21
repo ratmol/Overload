@@ -45,11 +45,16 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
 
     const session = sessionId ? ((await db.sessions.get(sessionId)) ?? null) : null;
     const swaps = session?.swaps ?? {};
+    const skips = session?.skips ?? [];
 
     // The template is read THROUGH the swap map rather than edited. Swapping is
     // a decision about today; next week goes back to the programmed lift on its
-    // own, which is what you want when the swap was "the rack was busy".
-    const slots = template.exerciseIds.map((id) => ({ slotId: id, exerciseId: swaps[id] ?? id }));
+    // own, which is what you want when the swap was "the rack was busy". Skipped
+    // slots are dropped at the same step, for the same reason — a skip is a
+    // decision about today, not a template edit.
+    const slots = template.exerciseIds
+      .filter((id) => !skips.includes(id))
+      .map((id) => ({ slotId: id, exerciseId: swaps[id] ?? id }));
     const planned = (await db.exercises.bulkGet(slots.map((s) => s.exerciseId))).filter(
       (e): e is Exercise => !!e,
     );
@@ -87,6 +92,7 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
       setCounts,
       slotFor,
       swaps,
+      skips,
       originalById: new Map(
         originals.filter((e): e is Exercise => !!e).map((e) => [e.id, e]),
       ),
@@ -108,7 +114,7 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
     );
   }
 
-  const { template, exercises, session, setCounts, slotFor, swaps, originalById } = data;
+  const { template, exercises, session, setCounts, slotFor, swaps, skips, originalById } = data;
   const supersetsOff = session?.supersetsOff ?? false;
   const index = Math.max(
     0,
@@ -116,6 +122,15 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
   );
   const exercise = exercises[Math.min(index, exercises.length - 1)];
   const isDeload = session?.isDeload ?? false;
+
+  // Same "what comes after this one" logic the finish button already uses —
+  // a skip is not a different kind of done, just an earlier one.
+  function advancePast(exerciseId: string) {
+    const at = exercises.findIndex((e) => e.id === exerciseId);
+    const next = exercises[at + 1];
+    if (next) setCurrentId(next.id);
+    else go('/');
+  }
 
   return (
     <main>
@@ -215,12 +230,25 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
             void setSessionFlags(sessionId, { swaps: next });
             setCurrentId(replacementId ?? slot);
           }}
-          rest={rest}
-          onFinished={() => {
-            const next = exercises[index + 1];
-            if (next) setCurrentId(next.id);
-            else go('/');
+          onSkip={() => {
+            const slot = slotFor.get(exercise.id);
+            if (slot !== undefined) {
+              // A programmed slot: record the skip so it stays gone for the
+              // rest of today but is back on its own next time this template
+              // comes up. Also drop any swap on it — nothing left to swap.
+              if (!skips.includes(slot)) {
+                void setSessionFlags(sessionId, { skips: [...skips, slot] });
+              }
+            } else {
+              // An ad-hoc addition nobody has logged a set against yet.
+              // Nothing was ever saved for it, so there is nothing to
+              // record — just take it off today's rail.
+              setPending((ids) => ids.filter((id) => id !== exercise.id));
+            }
+            advancePast(exercise.id);
           }}
+          rest={rest}
+          onFinished={() => advancePast(exercise.id)}
         />
       )}
 

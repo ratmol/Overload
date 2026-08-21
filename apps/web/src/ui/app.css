@@ -1229,3 +1229,40 @@ input.stepper-value:disabled {
 .scanner-manual {
   margin-top: var(--s3);
 }
+
+/* --------------------------------------------------------------------- */
+/* Multi-select chip grid — the custom-exercise muscle picker             */
+/* --------------------------------------------------------------------- */
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s1);
+}
+
+.chip {
+  min-height: 2.25rem;
+  padding: 0 var(--s3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-control);
+  background: var(--paper);
+  color: var(--ink-70);
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper-raised);
+  border-color: var(--ink);
+  font-weight: 700;
+}
+
+/* The "1°" primary-muscle marker inside a pressed chip. */
+.chip-tag {
+  font-size: 0.625rem;
+  opacity: 0.75;
+}

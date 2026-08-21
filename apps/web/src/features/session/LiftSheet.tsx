@@ -49,6 +49,7 @@ export function LiftSheet({
   supersetsOff,
   swappedFrom,
   onSwap,
+  onSkip,
   rest,
   onFinished,
 }: {
@@ -65,6 +66,13 @@ export function LiftSheet({
   swappedFrom?: Exercise | undefined;
   /** `null` puts the programmed lift back. */
   onSwap: (replacementId: string | null) => void;
+  /**
+   * Drop this exercise from today's session and move on. Only offered before
+   * any working set is logged against it — once you have started, "skip" and
+   * "I'm done with this one" are the same thing, and the finish button
+   * already says that.
+   */
+  onSkip: () => void;
   /**
    * Owned by the session, not by this component.
    *
@@ -316,6 +324,19 @@ export function LiftSheet({
           <button className="btn" data-tone="quiet" onClick={() => go(`/history/${exercise.id}`)}>
             History
           </button>
+          {working.length === 0 && (
+            <button
+              className="btn"
+              data-tone="quiet"
+              onClick={() => {
+                if (window.confirm(`Skip ${exercise.name} for today? It's back next time.`)) {
+                  onSkip();
+                }
+              }}
+            >
+              Skip today
+            </button>
+          )}
         </div>
       </section>
 

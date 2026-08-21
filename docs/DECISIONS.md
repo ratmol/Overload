@@ -672,6 +672,72 @@ session-counted fields existing.
 <!--
 Template for new entries:
 
+## 25. Skips are per-session and per-slot, the same shape as swaps
+
+`Session.skips: string[]` drops a programmed exercise from today only. Keyed
+by slot id, same key-space as `swaps`, so a slot cannot be both swapped and
+skipped without an ordering rule — the app checks skips first, since dropping
+a slot makes any swap on it moot. The template is never edited; next time
+that slot comes up it is back, exactly like a swap reverting on its own.
+
+**Skip is offered only before any working set is logged against the
+exercise.** Once you have started it, "skip" and "I am done with this one"
+mean the same thing, and the finish button already says that — a second
+button for the identical action would just be two ways to ask the same
+question. An ad-hoc addition nobody has logged a set against yet needs no
+persistence at all: it only ever existed in local `pending` state, so
+"skipping" it is just removing it from that array.
+
+**Reversible?** Yes. `skips` is optional and additive, absent on every session
+row that predates it.
+
+---
+
+## 26. Custom exercises are a plain row in the same table, id-prefixed
+
+`createCustomExercise()` writes straight into `db.exercises` with an
+id prefixed `custom-`. No new table, no parallel data model — `AddLift`
+already searches every row in `exercises`, so a custom one is swappable,
+addable and searchable the moment it exists, through exactly the same code
+every plan-seeded exercise goes through.
+
+**The prefix is what makes this safe under the existing migration model.**
+§18's plan-version migration does `bulkPut(PLAN.exercises)`, which only
+touches ids `plan.json` defines. A custom exercise's id is never one of
+those, so no migration can ever overwrite, rename, or silently drop it —
+verified structurally, not by convention alone, since `custom-` ids cannot
+collide with `plan.json`'s hand-picked slugs by construction.
+
+**Muscle fractions are inferred from tap order, not asked for.** First muscle
+tapped gets 1.0 (primary), every other gets 0.5 (secondary) — the same
+primary/secondary split the whole plan already uses (§9), applied
+automatically rather than as a second decision mid-form. The form is meant to
+be fast enough to fill in standing in a gym; asking for a numeric fraction per
+muscle is not that.
+
+**Not sync-tracked, same as every other row in `exercises`** (§21's
+exclusion is table-level). A custom exercise made on one device does not yet
+appear on a second. Worth revisiting once the sync client exists; not a
+reason to hold this feature until then; see §21 and §23.
+
+**A real bug this surfaced, fixed in the same pass:** `AddLift`'s new
+"create custom" branch originally `return`ed before the component's
+`useLiveQuery` call, so the hook ran on one render and not the next —
+React error #300, a full crash of the picker the moment the button was
+tapped. Hooks must run unconditionally, in the same order, every render; the
+branch has to sit after every hook, never before one. Caught by the browser
+verification pass for this feature, not by typecheck or the test suite —
+neither one runs the component tree, and this class of bug only exists at
+runtime.
+
+**Reversible?** Yes. `custom` is an optional boolean; every existing
+exercise is unaffected.
+
+---
+
+<!--
+Template for new entries:
+
 ## N. <the decision, stated as a claim>
 
 <what was chosen, and the one or two alternatives that were real>

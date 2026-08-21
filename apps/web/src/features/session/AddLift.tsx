@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Exercise } from '@overload/engine';
 import { db } from '../../db/db.js';
+import { CreateExerciseForm } from './CreateExerciseForm.js';
 
 export function AddLift({
   title = 'Add a lift',
@@ -32,8 +33,27 @@ export function AddLift({
   onCancel: () => void;
 }) {
   const [query, setQuery] = useState('');
+  const [creating, setCreating] = useState(false);
 
+  // Hooks run unconditionally, every render, in the same order — that is the
+  // rule, not a style preference. The create-form branch used to return
+  // before this line, so flipping `creating` on changed how many hooks ran
+  // between one render and the next and crashed the whole tree (React error
+  // #300). The branch has to come AFTER every hook, never before one.
   const all = useLiveQuery(() => db.exercises.orderBy('name').toArray(), []);
+
+  if (creating) {
+    return (
+      <CreateExerciseForm
+        onCreated={(id) => {
+          setCreating(false);
+          onPick(id);
+        }}
+        onCancel={() => setCreating(false)}
+      />
+    );
+  }
+
   if (!all) return <div className="empty">…</div>;
 
   const excluded = new Set(excludeIds);
@@ -79,6 +99,15 @@ export function AddLift({
         />
       </div>
 
+      {q !== '' && rest.length === 0 && (
+        <p className="hint">Nothing in the library matches &ldquo;{query}&rdquo;.</p>
+      )}
+      <div className="btn-row">
+        <button className="btn" data-tone="quiet" type="button" onClick={() => setCreating(true)}>
+          Can&rsquo;t find it? Add your own
+        </button>
+      </div>
+
       {/*
         With alternates on screen and nothing typed, the rest of the library is
         just the first six exercises in alphabetical order — noise dressed up as
@@ -113,7 +142,14 @@ function LiftRow({
   return (
     <button className="day-row" onClick={() => onPick(exercise.id)}>
       <span>
-        <span className="day-row-name">{exercise.name}</span>
+        <span className="day-row-name">
+          {exercise.name}
+          {exercise.custom && (
+            <span className="badge day-row-badge" style={{ borderColor: 'var(--rule-strong)', color: 'var(--ink-45)' }}>
+              Yours
+            </span>
+          )}
+        </span>
         <br />
         <span className="day-row-meta">
           {exercise.defaultSets} × {exercise.defaultRepRange[0]}–{exercise.defaultRepRange[1]} ·{' '}
