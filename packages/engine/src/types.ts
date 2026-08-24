@@ -144,6 +144,8 @@ export const MuscleGroup = z.enum([
   'glutes',
   'calves',
   'abs',
+  /** Direct neck work (neck curls). Added for the 1x4 Method's accessory day. */
+  'neck',
 ]);
 export type MuscleGroup = z.infer<typeof MuscleGroup>;
 

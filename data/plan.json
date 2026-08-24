@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "name": "Upper/Lower rolling 2-on-1-off — program v3, ~40 minutes, lean gain block",
+  "version": 5,
+  "name": "The 1x4 Method — 3 main days + 1 optional accessory, one work set to failure, 6-10 reps",
   "deloadEveryWeeks": 6,
   "exercises": [
     {
@@ -30,16 +30,13 @@
         6,
         10
       ],
-      "defaultSets": 3,
+      "defaultSets": 1,
       "startingLoadLb": 50,
-      "notes": "Per-hand load. Lighter than previous 60x4-6 on purpose: rep-range shift out of 3-6.",
+      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
       "targetRirBySet": [
-        2,
-        2,
-        1
+        0
       ],
-      "restSeconds": 90,
-      "supersetGroup": "A",
+      "restSeconds": 120,
       "alternates": [
         "incline-barbell-press",
         "machine-chest-press"
@@ -145,16 +142,15 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        10,
-        12
+        6,
+        10
       ],
-      "defaultSets": 2,
-      "notes": "Strict, no torso English. Posture correction.",
+      "defaultSets": 1,
+      "notes": "Strict, no torso English. 1x4 Method: one work set to failure after a 50% warm-up.",
       "targetRirBySet": [
-        1
+        0
       ],
-      "restSeconds": 60,
-      "supersetGroup": "B",
+      "restSeconds": 120,
       "alternates": [
         "single-arm-db-row",
         "seated-cable-row",
@@ -177,10 +173,16 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        10,
-        12
+        6,
+        10
       ],
-      "defaultSets": 3
+      "defaultSets": 1,
+      "startingLoadLb": 25,
+      "notes": "1x4 Method: one work set to failure after a 50% warm-up. Per-hand load.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 90
     },
     {
       "id": "cable-lateral-raise",
@@ -194,11 +196,11 @@
       "isBodyweightLoaded": false,
       "incrementLb": 2.5,
       "defaultRepRange": [
-        12,
-        20
+        6,
+        10
       ],
-      "defaultSets": 3,
-      "notes": "Priority 1 visual lever. True failure on every set — it fails locally and the cost is a sore delt. Appears on both upper days. Do not skip when tired.",
+      "defaultSets": 1,
+      "notes": "Priority 1 visual lever. 1x4 Method: one heavy work set of 6-10 to failure. Heavier than the usual lateral-raise range — bump back to 12-20 here if the shoulder joint complains.",
       "targetRirBySet": [
         0
       ],
@@ -297,16 +299,16 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        8,
+        6,
         10
       ],
-      "defaultSets": 2,
+      "defaultSets": 1,
       "startingLoadLb": 115,
+      "notes": "1x4 Method: one work set to failure. Stop the instant the lower back rounds — 'to failure with good form' means form is the limiter here, not the hamstrings.",
       "targetRirBySet": [
-        2
+        0
       ],
-      "restSeconds": 90,
-      "supersetGroup": "B",
+      "restSeconds": 120,
       "alternates": [
         "single-leg-rdl",
         "lying-leg-curl",
@@ -329,16 +331,15 @@
       "isBodyweightLoaded": false,
       "incrementLb": 10,
       "defaultRepRange": [
-        10,
-        15
+        6,
+        10
       ],
-      "defaultSets": 2,
+      "defaultSets": 1,
+      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
       "targetRirBySet": [
-        1,
         0
       ],
-      "restSeconds": 75,
-      "supersetGroup": "C",
+      "restSeconds": 120,
       "alternates": [
         "single-leg-leg-press",
         "hack-squat",
@@ -357,16 +358,15 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        10,
-        15
+        6,
+        10
       ],
-      "defaultSets": 2,
+      "defaultSets": 1,
+      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
       "targetRirBySet": [
-        1,
         0
       ],
-      "restSeconds": 75,
-      "supersetGroup": "C",
+      "restSeconds": 90,
       "alternates": [
         "lying-leg-curl",
         "nordic-curl"
@@ -385,15 +385,14 @@
       "incrementLb": 5,
       "defaultRepRange": [
         8,
-        15
+        12
       ],
-      "defaultSets": 3,
-      "notes": "Full stretch, 2s pause at bottom.",
+      "defaultSets": 1,
+      "notes": "Full stretch, 2s pause at bottom. 1x4 Method accessory: one work set to failure.",
       "targetRirBySet": [
         0
       ],
-      "restSeconds": 90,
-      "supersetGroup": "B",
+      "restSeconds": 75,
       "alternates": [
         "seated-calf-raise",
         "leg-press-calf-raise"
@@ -507,19 +506,15 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        10,
-        15
+        6,
+        10
       ],
-      "defaultSets": 4,
-      "notes": "Lat WIDTH, priority 3. Grip 1.5x shoulder width, full scapular elevation at top, stop at collarbone. Never let this become a heavy 5-rep grind.",
+      "defaultSets": 1,
+      "notes": "Lat WIDTH, priority 3. 1x4 Method: one work set of 6-10 to failure. Wide grip, full scapular elevation, stop at collarbone. 6-10 is heavier than ideal for width — widen back to 10-15 here for the higher-rep stimulus.",
       "targetRirBySet": [
-        1,
-        1,
-        1,
         0
       ],
-      "restSeconds": 90,
-      "supersetGroup": "A",
+      "restSeconds": 120,
       "alternates": [
         "single-arm-pulldown",
         "assisted-pullup",
@@ -604,10 +599,11 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        15,
-        20
+        6,
+        10
       ],
-      "defaultSets": 2,
+      "defaultSets": 1,
+      "notes": "1x4 Method rear-delt-fly slot: one work set to failure. 6-10 is heavy for rear delts — widen back to 15-20 here if it strains the joint.",
       "targetRirBySet": [
         0
       ],
@@ -718,15 +714,15 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        12,
-        20
+        6,
+        10
       ],
-      "defaultSets": 3,
+      "defaultSets": 1,
+      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
       "targetRirBySet": [
         0
       ],
-      "restSeconds": 75,
-      "supersetGroup": "B",
+      "restSeconds": 90,
       "alternates": [
         "single-leg-leg-extension",
         "hack-squat"
@@ -1279,14 +1275,19 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        12,
-        15
+        6,
+        10
       ],
-      "defaultSets": 3,
+      "defaultSets": 1,
+      "notes": "1x4 Method chest-fly slot: one work set to failure after a 50% warm-up.",
       "targetRirBySet": [
         0
       ],
-      "restSeconds": 60
+      "restSeconds": 60,
+      "alternates": [
+        "low-to-high-cable-fly",
+        "incline-db-fly"
+      ]
     },
     {
       "id": "incline-db-fly",
@@ -1469,55 +1470,143 @@
       "restSeconds": 90,
       "startingLoadLb": 0,
       "notes": "Bodyweight hamstring curl. Brutal - start with assistance."
+    },
+    {
+      "id": "cable-pushdown",
+      "name": "Cable pushdown (straight bar)",
+      "muscles": [
+        {
+          "muscle": "triceps",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        6,
+        10
+      ],
+      "defaultSets": 1,
+      "startingLoadLb": 40,
+      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 90
+    },
+    {
+      "id": "neck-curl",
+      "name": "Neck curl",
+      "muscles": [
+        {
+          "muscle": "neck",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 1,
+      "startingLoadLb": 5,
+      "notes": "Optional accessory day. Light plate on the forehead, slow and controlled — never explosive.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 60
+    },
+    {
+      "id": "wrist-roller",
+      "name": "Wrist roller",
+      "muscles": [
+        {
+          "muscle": "forearms",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 2.5,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 1,
+      "startingLoadLb": 5,
+      "notes": "Optional accessory. Reps count full roll-ups; go to grip failure.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 60
+    },
+    {
+      "id": "cable-crunch",
+      "name": "Cable crunch",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "fraction": 1
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        10,
+        15
+      ],
+      "defaultSets": 1,
+      "startingLoadLb": 40,
+      "notes": "Optional accessory. Round the spine down, crunch to failure.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 60,
+      "alternates": [
+        "hanging-leg-raise",
+        "lying-leg-raise"
+      ]
     }
   ],
   "templates": [
     {
-      "id": "upper-a",
-      "name": "Upper A",
+      "id": "day-1-cst",
+      "name": "Day 1 — Chest, Shoulders, Triceps",
       "exerciseIds": [
         "incline-db-press",
-        "weighted-pullup",
-        "low-to-high-cable-fly",
-        "chest-supported-row",
+        "pec-deck",
         "cable-lateral-raise",
-        "face-pull"
+        "cable-pushdown"
       ]
     },
     {
-      "id": "lower-a",
-      "name": "Lower A",
+      "id": "day-2-legs",
+      "name": "Day 2 — Legs",
       "exerciseIds": [
-        "back-squat",
-        "romanian-deadlift",
-        "standing-calf-raise",
         "leg-press",
-        "seated-leg-curl",
-        "hanging-leg-raise"
-      ]
-    },
-    {
-      "id": "upper-b",
-      "name": "Upper B",
-      "exerciseIds": [
-        "incline-barbell-press",
-        "wide-grip-pulldown",
-        "seated-cable-row",
-        "straight-arm-pulldown",
-        "cable-lateral-raise",
-        "reverse-pec-deck"
-      ]
-    },
-    {
-      "id": "lower-b",
-      "name": "Lower B",
-      "exerciseIds": [
-        "bulgarian-split-squat",
+        "romanian-deadlift",
         "leg-extension",
-        "lying-leg-curl",
-        "hip-thrust",
-        "seated-calf-raise",
-        "band-pull-apart"
+        "seated-leg-curl"
+      ]
+    },
+    {
+      "id": "day-3-bb",
+      "name": "Day 3 — Back & Biceps",
+      "exerciseIds": [
+        "wide-grip-pulldown",
+        "chest-supported-row",
+        "reverse-pec-deck",
+        "incline-db-curl"
+      ]
+    },
+    {
+      "id": "day-4-acc",
+      "name": "Day 4 — Accessory (optional)",
+      "exerciseIds": [
+        "neck-curl",
+        "wrist-roller",
+        "cable-crunch",
+        "standing-calf-raise"
       ]
     }
   ],
@@ -1616,7 +1705,11 @@
       "minSetsPerWeek": 6,
       "maxSetsPerWeek": 10,
       "priority": 3
+    },
+    {
+      "muscle": "neck",
+      "minSetsPerWeek": 0,
+      "maxSetsPerWeek": 4
     }
-  ],
-  "deloadEverySessions": 24
+  ]
 }

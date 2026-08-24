@@ -59,7 +59,7 @@ describe('plan.json', () => {
   });
 
   it('has four session templates', () => {
-    expect(plan.templates.map((t) => t.id)).toEqual(['upper-a', 'lower-a', 'upper-b', 'lower-b']);
+    expect(plan.templates.map((t) => t.id)).toEqual(['day-1-cst', 'day-2-legs', 'day-3-bb', 'day-4-acc']);
   });
 });
 
@@ -117,7 +117,11 @@ describe('auditVolume', () => {
     expect(rows[0]!.muscle).toBe('sideDelts');
   });
 
-  it('hits the plan targets when a full prescribed week is logged', () => {
+  it('leaves priority muscles under target on a full prescribed week — the 1x4 Method trade', () => {
+    // The 1x4 Method is one work set per exercise: a full four-day week is 16
+    // sets, so every priority muscle gets ~1 direct set against floors of 4-6.
+    // v3 hit these targets; this program deliberately does not — "less volume,
+    // more intensity". The full accounting is in apps/web/test/plan.test.ts.
     const sets: SetLog[] = [];
     for (const t of plan.templates) {
       for (const id of t.exerciseIds) {
@@ -126,7 +130,10 @@ describe('auditVolume', () => {
       }
     }
     const rows = audit(sets);
-    const under = rows.filter((r) => r.status === 'under' && (r.priority ?? 99) <= 3);
-    expect(under, JSON.stringify(under)).toHaveLength(0);
+    const priority = rows.filter((r) => r.priority !== undefined);
+    expect(priority.length).toBeGreaterThan(0);
+    for (const row of priority) {
+      expect(row.status, `${row.muscle} (priority ${row.priority})`).toBe('under');
+    }
   });
 });

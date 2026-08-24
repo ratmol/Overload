@@ -771,6 +771,55 @@ so this class of bug is caught by driving the real app, not by `npm test`.
 
 ---
 
+## 28. Program v5 replaces v3 wholesale with the 1x4 Method
+
+`data/plan.json` bumped to file version 5. The rolling Upper/Lower v3 program
+is gone; in its place is the **1x4 Method** (Eric Evans): four exercises per
+session, one warm-up at 50% plus **one work set to absolute failure**, 6-10
+reps with double progression, three main days plus one optional accessory day.
+Requested directly (a photo of the routine dropped in `docs/`), and
+implemented as a pure data change — the app is fully data-driven off the plan,
+so no component, rotation, or progression code moved. §18's migration overwrote
+the templates and the exercises they name; every v3 exercise stays in the
+library so old logged sets still resolve (same precedent as v2 keeping the
+deadlift, v3 keeping the dip).
+
+**What changed in the data.** The 12 main-day lifts were retuned to
+`defaultSets: 1`, `targetRirBySet: [0]`, `defaultRepRange: [6, 10]`. Every
+superset group on a scheduled lift was cleared — the method is straight sets,
+and a stale group would make the session screen silently pair two lifts. Four
+new exercises were added because the v3 library had no triceps pushdown, neck,
+grip, or ab-crunch movement: `cable-pushdown`, `neck-curl`, `wrist-roller`,
+`cable-crunch`. `deloadEverySessions` was dropped — the 1x4 Method has a fixed
+week, so the engine falls back to `deloadEveryWeeks` (the session-counted timer
+existed only because v3 had no week; see §24).
+
+**One engine schema change: a `neck` muscle group.** Neck curls had nowhere to
+map. The alternatives were to drop the exercise (unfaithful to a plan the user
+chose) or map it to a wrong muscle (violates "no silently-wrong number"). Added
+`neck` to the `MuscleGroup` enum — additive, the exercise-creation UI derives
+its options from `MuscleGroup.options` so it picked the value up with no code
+change, and there is no exhaustive switch on the enum to break. Its volume
+target is `min 0` because the accessory day is optional and should never read
+"under".
+
+**The honest cost, pinned as tests, not smoothed over.** The 1x4 Method trades
+volume for intensity: a full four-day week is 16 work sets against v3's ~70,
+and every priority muscle (side delts P1, upper chest P2, lat width / rear
+delts P3, lower traps P4) gets ~1 direct set per week — far under the floors in
+the user's own `volumeTargets`, which were left unchanged because the user's
+physique goals did not move. So the volume screen will read red on exactly the
+levers the user cares about most. Rather than lower the targets to make the
+screen green, `apps/web/test/plan.test.ts` and `packages/engine`'s
+`volume.test.ts` assert the under-target reality directly, the same way v3's
+suite pinned its own shortfalls. Failure on the RDL and presses is likewise the
+method as written, flagged in the exercise notes rather than quietly softened.
+
+**Reversible?** Fully — it is a data file plus one additive enum value. Git
+history holds v3 verbatim if it is ever wanted back.
+
+---
+
 <!--
 Template for new entries:
 
