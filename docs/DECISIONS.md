@@ -820,6 +820,43 @@ history holds v3 verbatim if it is ever wanted back.
 
 ---
 
+## 29. Rechecking v5 against the source photo found one real bug: `notes` was dead data
+
+Asked to recheck whether the shipped 1x4 Method aligns with the routine as
+photographed (`docs/WhatsApp Image 2026-08-24 at 10.37.59.jpeg`). The
+structure held up under a field-by-field comparison — 4 templates, 4 lifts
+each, `defaultSets: 1` / RIR 0 / 6-10 reps on every main-day lift, straight
+sets, the exercise names all map onto the library, and `plan.test.ts` already
+pins the shape (§28) rather than just asserting it by eye. The accessory
+day's wider rep ranges (8-12 / 10-15, not 6-10) are a deliberate, already-
+documented exemption, reasoned about in `plan.test.ts`'s own comment, not an
+oversight.
+
+One real gap turned up: `Exercise.notes` — the field carrying the method's
+safety-critical nuance ("stop the instant the lower back rounds", "widen back
+to 12-20 here if the shoulder joint complains") — was written into every v5
+exercise but never rendered anywhere in the app. It existed only as an
+argument to `createCustomExercise` and otherwise sat unused in `plan.json`.
+For a program whose signature move is "take it to true failure," the one line
+telling a lifter when to stop early is exactly the wrong thing to leave
+unread. Fixed by printing `exercise.notes` in `LiftSheet.tsx`, styled as the
+same `.hint` class used everywhere else, directly under the prescription's
+reason line. Verified with a real page load on the RDL slot (the longest note
+in the plan): it renders, and the pad — the one thing the "nothing scrolls
+mid-set" rule actually protects — still fits the viewport without scrolling.
+The info card above it can scroll on its own if a note runs long; that
+was already true of the reason line and the logbook table before this change.
+
+Also found and fixed: `README.md` and `CLAUDE.md` still described program v3
+(the rolling Upper/Lower split, differentiated RIR ladders, default supersets,
+session-counted deload) as the current program, and both had stale test
+counts predating even that. Both now describe v5, with the counts corrected
+to 291 (217 engine + 74 app).
+
+**Reversible?** Fully — a rendered `<p>` and prose edits, no schema or data change.
+
+---
+
 <!--
 Template for new entries:
 

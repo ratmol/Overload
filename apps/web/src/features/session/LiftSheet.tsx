@@ -223,6 +223,8 @@ export function LiftSheet({
           {prescribed.reason}
         </p>
 
+        {exercise.notes && <p className="hint">{exercise.notes}</p>}
+
         <table className="logbook" data-system={exercise.isBodyweightLoaded}>
           <thead>
             <tr>
