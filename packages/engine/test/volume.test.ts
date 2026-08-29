@@ -59,7 +59,7 @@ describe('plan.json', () => {
   });
 
   it('has four session templates', () => {
-    expect(plan.templates.map((t) => t.id)).toEqual(['day-1-cst', 'day-2-legs', 'day-3-bb', 'day-4-acc']);
+    expect(plan.templates.map((t) => t.id)).toEqual(['day-1-push', 'day-2-pull', 'day-3-legs', 'day-4-sa']);
   });
 });
 
@@ -117,11 +117,11 @@ describe('auditVolume', () => {
     expect(rows[0]!.muscle).toBe('sideDelts');
   });
 
-  it('leaves priority muscles under target on a full prescribed week — the 1x4 Method trade', () => {
-    // The 1x4 Method is one work set per exercise: a full four-day week is 16
-    // sets, so every priority muscle gets ~1 direct set against floors of 4-6.
-    // v3 hit these targets; this program deliberately does not — "less volume,
-    // more intensity". The full accounting is in apps/web/test/plan.test.ts.
+  it('serves the shoulder priorities in range on a full prescribed week', () => {
+    // v6 is a real hypertrophy dose again — two sets across ~20 lifts a week.
+    // Front delts (the stated priority, worked directly on both Push and Day 4)
+    // and side delts both clear their floor. Chest and back-width priorities
+    // still do not; the full per-muscle picture is in apps/web/test/plan.test.ts.
     const sets: SetLog[] = [];
     for (const t of plan.templates) {
       for (const id of t.exerciseIds) {
@@ -130,10 +130,7 @@ describe('auditVolume', () => {
       }
     }
     const rows = audit(sets);
-    const priority = rows.filter((r) => r.priority !== undefined);
-    expect(priority.length).toBeGreaterThan(0);
-    for (const row of priority) {
-      expect(row.status, `${row.muscle} (priority ${row.priority})`).toBe('under');
-    }
+    expect(find(rows, 'frontDelts').status).toBe('in-range');
+    expect(find(rows, 'sideDelts').status).toBe('in-range');
   });
 });

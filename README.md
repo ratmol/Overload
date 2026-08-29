@@ -10,7 +10,7 @@ account — signing in turns sync on, it is not a gate on the product. This
 supersedes an earlier "no server, no account, no sync"; see
 [DECISIONS section 21](docs/DECISIONS.md) for what that cost and why.
 
-**Status:** both halves are built and wired together. 291 tests. The app logs
+**Status:** both halves are built and wired together. 299 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -22,16 +22,16 @@ the confidence model as a description of the engine's own opinion, not evidence.
 
 | | |
 |---|---|
-| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 217 tests. **Start here.** |
+| [`packages/engine`](packages/engine) | The adaptive engine. Pure TypeScript, 225 tests. **Start here.** |
 | [`apps/web`](apps/web) | React PWA. The logger and the dashboard. |
-| [`data/plan.json`](data/plan.json) | The training program as data, not code. Currently program v5 — the 1x4 Method: 4 exercises a session, one warm-up plus one work set to failure, three main days plus an optional accessory day. See [DECISIONS §28](docs/DECISIONS.md). |
+| [`data/plan.json`](data/plan.json) | The training program as data, not code. Currently program v6 — a four-day Push / Pull / Legs / Shoulders-Arms-Abs split, two sets to failure (compounds capped at form-failure), front-delt priority. See [DECISIONS §30](docs/DECISIONS.md). |
 | [`docs/ALGORITHM.md`](docs/ALGORITHM.md) | Every constant and the assumption behind it. |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Irreversible calls and what they cost. |
 
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 217 engine + 74 app tests
+npm test           # 225 engine + 74 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```
@@ -72,12 +72,13 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
   from the last two sessions: all sets at the top of the range adds an
   increment, otherwise chase reps at the same load, and two flat transitions in
   a row reports a stall — with the sentence explaining which it did and why.
-- **A per-set RIR ladder**, though the current program (the 1x4 Method, see
-  below) uses it at its simplest: one set, RIR 0, true failure, on every
-  scheduled lift. The ladder itself supports a graded target per set — `2 / 2 /
-  1` on a lift where only the last set should fail — for whatever program comes
-  after this one. The pad defaults to the rung for the set you are on, so the
-  one hard set does not quietly become another easy one.
+- **A per-set RIR ladder.** The current program (a PPL split, see below) uses
+  two sets on every lift: RIR 0 (true failure) on isolation, RIR 1
+  (form-failure) on the systemic compounds where failing the last rep is a
+  safety risk. The ladder supports a graded target per set — `2 / 2 / 1` on a
+  lift where only the last set should fail — for whatever program comes after
+  this one. The pad defaults to the rung for the set you are on, so a hard set
+  does not quietly become an easy one.
 - **Per-exercise rest**, and a straight-sets mode that lengthens it when a
   lift's superset partner is not actually being trained alongside it — the
   current program runs every scheduled lift straight, but a swapped-in
@@ -111,7 +112,7 @@ One screen per lift, sized so nothing scrolls while a set is in progress.
   50 to 55 and wrong for 50 to 135.
 - **Deload** as a toggle: halves the sets, drops to ~87.5%, strips the belt from
   bodyweight-loaded lifts. A banner suggests one when the schedule expires — by
-  calendar week under the current program, since the 1x4 Method runs a fixed
+  calendar week under the current program, since the PPL split runs a fixed
   week (the engine also supports counting by session instead, for a program
   with no week at all) — or two independent fatigue signals appear. A four-tap
   check-in — sleep, joints,
@@ -145,11 +146,11 @@ depended on it.
   tagged shift or off, since a standing shift plausibly costs 300-500 kcal more
   than a rest day and one flat number means a surplus on half of them.
 - **Weekly volume audit** against the plan's per-muscle targets, counting hard
-  sets only (RIR ≤ 4) and secondaries at half. Under the current program (the
-  1x4 Method) this reads under target on every priority muscle by design —
-  one work set per lift per week is the method's whole trade, less volume for
-  more intensity, and the targets were left where they were rather than
-  lowered to make the screen agree with the program. See DECISIONS §28.
+  sets only (RIR ≤ 4) and secondaries at half. Under the current PPL program the
+  shoulder priorities (front and side delts) read in range, while upper chest
+  and lat width read under — the split carries no dedicated work for them, and
+  the targets were left where they were rather than lowered to make the screen
+  agree with the program. See DECISIONS §30.
 - **A personal food list, with barcode scanning** — not a search over 300k
   foods. Scan or type a barcode, look it up against Open Food Facts, and
   every result is confirmed by hand before it is saved; crowd-sourced macros

@@ -310,6 +310,14 @@ export const Session = z.object({
    * `straightSetRestSeconds`.
    */
   supersetsOff: z.boolean().optional(),
+  /**
+   * Wall-clock instant the user tapped "Finish session". Stored so the
+   * gym-time total survives into history; the START is never stored — it is
+   * derived from the first working set (see `firstWorkingSetAt`), which keeps
+   * to the rule that nothing derived is persisted. Absent means the session
+   * was never formally finished (walked out, or still open).
+   */
+  finishedAt: z.string().datetime().optional(),
 });
 export type Session = z.infer<typeof Session>;
 

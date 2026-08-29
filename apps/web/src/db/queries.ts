@@ -46,6 +46,16 @@ export async function startSession(
   return id;
 }
 
+/**
+ * Stamp the moment the session was finished. The gym-time total is computed
+ * from this and the first working set — see `gymTimeSeconds`; nothing derived
+ * is stored.
+ */
+export async function finishSession(sessionId: string): Promise<void> {
+  await db.sessions.update(sessionId, { finishedAt: new Date().toISOString() });
+  await touch('sessions', [sessionId]);
+}
+
 export async function setSessionFlags(
   sessionId: string,
   patch: Partial<

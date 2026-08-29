@@ -44,6 +44,19 @@ export function clock(seconds: number): string {
   return `${sign}${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
+/**
+ * Gym-session length. "1:04:23" past an hour, "47:30" under — the shape a
+ * stopwatch shows, so a glance reads it without thinking about units.
+ */
+export function duration(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds));
+  const two = (n: number) => String(n).padStart(2, '0');
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return h > 0 ? `${h}:${two(m)}:${two(sec)}` : `${m}:${two(sec)}`;
+}
+
 /** "4 × 8 @ 50 lb" — the way it would be written in a paper log. */
 export function describeSets(
   sets: readonly { addedWeightLb: number; reps: number }[],

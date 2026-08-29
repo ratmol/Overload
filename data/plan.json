@@ -1,6 +1,6 @@
 {
-  "version": 5,
-  "name": "The 1x4 Method — 3 main days + 1 optional accessory, one work set to failure, 6-10 reps",
+  "version": 6,
+  "name": "PPL + Shoulders/Arms/Abs — four days, 2 sets to failure (compounds capped at form-failure), front-delt priority",
   "deloadEveryWeeks": 6,
   "exercises": [
     {
@@ -30,9 +30,9 @@
         6,
         10
       ],
-      "defaultSets": 1,
+      "defaultSets": 2,
       "startingLoadLb": 50,
-      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
+      "notes": "Push day. 2 sets to true failure (RIR 0) — a dumbbell press is safe to fail, just lower the bells. Per-hand load.",
       "targetRirBySet": [
         0
       ],
@@ -62,20 +62,17 @@
       "isBodyweightLoaded": true,
       "incrementLb": 2.5,
       "defaultRepRange": [
-        5,
-        8
+        6,
+        10
       ],
-      "defaultSets": 3,
+      "defaultSets": 2,
       "startingLoadLb": 30,
-      "notes": "Belt weight only. System load = bodyweight + belt. 5 lb is a ~4% jump at 132 lb BW, so the increment is 2.5.",
+      "notes": "Pull-day compound. Belt weight only; system load = bodyweight + belt. 2 sets at form-failure (RIR 1) — leave the grinding last rep.",
       "entryStandardReps": 10,
       "targetRirBySet": [
-        2,
-        2,
         1
       ],
       "restSeconds": 90,
-      "supersetGroup": "A",
       "alternates": [
         "assisted-pullup",
         "wide-grip-pulldown",
@@ -107,12 +104,12 @@
       ],
       "defaultSets": 2,
       "startingLoadLb": 45,
-      "notes": "Dropped from the rotation in v3 — Upper A now supersets the incline fly with the row instead. Kept here so past sets still resolve and it stays available as a swap.",
+      "notes": "Push-day compound. 2 sets stopped at form-failure (RIR 1) — a dip driven to true failure under a loaded belt is a shoulder risk, not worth the last rep.",
       "entryStandardReps": 12,
       "targetRirBySet": [
         1
       ],
-      "restSeconds": 75,
+      "restSeconds": 90,
       "alternates": [
         "machine-chest-press",
         "pec-deck"
@@ -142,15 +139,15 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        8,
+        12
       ],
-      "defaultSets": 1,
-      "notes": "Strict, no torso English. 1x4 Method: one work set to failure after a 50% warm-up.",
+      "defaultSets": 2,
+      "notes": "Strict, no torso English. 2 sets to true failure (RIR 0).",
       "targetRirBySet": [
         0
       ],
-      "restSeconds": 120,
+      "restSeconds": 90,
       "alternates": [
         "single-arm-db-row",
         "seated-cable-row",
@@ -173,12 +170,12 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        8,
+        12
       ],
-      "defaultSets": 1,
+      "defaultSets": 2,
       "startingLoadLb": 25,
-      "notes": "1x4 Method: one work set to failure after a 50% warm-up. Per-hand load.",
+      "notes": "Biceps. 2 sets to true failure (RIR 0). Per-hand load.",
       "targetRirBySet": [
         0
       ],
@@ -196,11 +193,11 @@
       "isBodyweightLoaded": false,
       "incrementLb": 2.5,
       "defaultRepRange": [
-        6,
-        10
+        12,
+        20
       ],
-      "defaultSets": 1,
-      "notes": "Priority 1 visual lever. 1x4 Method: one heavy work set of 6-10 to failure. Heavier than the usual lateral-raise range — bump back to 12-20 here if the shoulder joint complains.",
+      "defaultSets": 2,
+      "notes": "Side delts, shoulder width. 2 sets to true failure (RIR 0), high reps — it fails locally and costs a sore delt, nothing systemic. On both Push and Day 4.",
       "targetRirBySet": [
         0
       ],
@@ -261,15 +258,13 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        5,
-        8
+        6,
+        10
       ],
-      "defaultSets": 3,
+      "defaultSets": 2,
       "startingLoadLb": 185,
-      "notes": "Depth over weight. If Tuesday is a long shift, cap all three sets at RIR 2 — a failed squat rep at 7am is the most expensive set in the program.",
+      "notes": "Leg-day compound. Depth over weight. 2 sets at form-failure (RIR 1), NOT true failure — you fail a squat by getting pinned under it. Rack the bar the moment a rep grinds to a stop or the lower back rounds.",
       "targetRirBySet": [
-        2,
-        2,
         1
       ],
       "restSeconds": 180,
@@ -299,14 +294,14 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        8,
+        12
       ],
-      "defaultSets": 1,
+      "defaultSets": 2,
       "startingLoadLb": 115,
-      "notes": "1x4 Method: one work set to failure. Stop the instant the lower back rounds — 'to failure with good form' means form is the limiter here, not the hamstrings.",
+      "notes": "Leg-day compound. 2 sets at form-failure (RIR 1). Stop the instant the lower back rounds — form is the limiter here, not the hamstrings.",
       "targetRirBySet": [
-        0
+        1
       ],
       "restSeconds": 120,
       "alternates": [
@@ -358,11 +353,11 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        10,
+        15
       ],
-      "defaultSets": 1,
-      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
+      "defaultSets": 2,
+      "notes": "Hamstrings. 2 sets to true failure (RIR 0).",
       "targetRirBySet": [
         0
       ],
@@ -384,11 +379,11 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        8,
-        12
+        10,
+        15
       ],
-      "defaultSets": 1,
-      "notes": "Full stretch, 2s pause at bottom. 1x4 Method accessory: one work set to failure.",
+      "defaultSets": 2,
+      "notes": "Calves. Full stretch, 2s pause at bottom. 2 sets to true failure (RIR 0).",
       "targetRirBySet": [
         0
       ],
@@ -506,15 +501,15 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        10,
+        15
       ],
-      "defaultSets": 1,
-      "notes": "Lat WIDTH, priority 3. 1x4 Method: one work set of 6-10 to failure. Wide grip, full scapular elevation, stop at collarbone. 6-10 is heavier than ideal for width — widen back to 10-15 here for the higher-rep stimulus.",
+      "defaultSets": 2,
+      "notes": "Lat WIDTH, priority. Wide grip, full scapular elevation, stop at collarbone. 2 sets to true failure (RIR 0), higher reps for the width stimulus.",
       "targetRirBySet": [
         0
       ],
-      "restSeconds": 120,
+      "restSeconds": 90,
       "alternates": [
         "single-arm-pulldown",
         "assisted-pullup",
@@ -599,11 +594,11 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        15,
+        20
       ],
-      "defaultSets": 1,
-      "notes": "1x4 Method rear-delt-fly slot: one work set to failure. 6-10 is heavy for rear delts — widen back to 15-20 here if it strains the joint.",
+      "defaultSets": 2,
+      "notes": "Rear delts. 2 sets to true failure (RIR 0), high reps.",
       "targetRirBySet": [
         0
       ],
@@ -714,11 +709,11 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        10,
+        15
       ],
-      "defaultSets": 1,
-      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
+      "defaultSets": 2,
+      "notes": "Quads. 2 sets to true failure (RIR 0).",
       "targetRirBySet": [
         0
       ],
@@ -1483,16 +1478,16 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        6,
-        10
+        8,
+        12
       ],
-      "defaultSets": 1,
+      "defaultSets": 2,
       "startingLoadLb": 40,
-      "notes": "1x4 Method: one work set to failure after a 50% warm-up.",
+      "notes": "Triceps. 2 sets to true failure (RIR 0).",
       "targetRirBySet": [
         0
       ],
-      "restSeconds": 90
+      "restSeconds": 75
     },
     {
       "id": "neck-curl",
@@ -1552,12 +1547,12 @@
       "isBodyweightLoaded": false,
       "incrementLb": 5,
       "defaultRepRange": [
-        10,
-        15
+        12,
+        20
       ],
-      "defaultSets": 1,
+      "defaultSets": 2,
       "startingLoadLb": 40,
-      "notes": "Optional accessory. Round the spine down, crunch to failure.",
+      "notes": "Abs, Day 4. Round the spine down, crunch to true failure (RIR 0).",
       "targetRirBySet": [
         0
       ],
@@ -1566,47 +1561,86 @@
         "hanging-leg-raise",
         "lying-leg-raise"
       ]
+    },
+    {
+      "id": "db-shoulder-press",
+      "name": "Seated dumbbell shoulder press",
+      "muscles": [
+        {
+          "muscle": "frontDelts",
+          "fraction": 1
+        },
+        {
+          "muscle": "sideDelts",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "triceps",
+          "fraction": 0.5
+        }
+      ],
+      "isBodyweightLoaded": false,
+      "incrementLb": 5,
+      "defaultRepRange": [
+        8,
+        12
+      ],
+      "defaultSets": 2,
+      "startingLoadLb": 30,
+      "notes": "Front-delt priority lift — the reason the front delts get direct work twice a week (Push and Day 4). 2 sets to true failure (RIR 0); a dumbbell press is safe to fail. Per-hand load.",
+      "targetRirBySet": [
+        0
+      ],
+      "restSeconds": 120,
+      "alternates": [
+        "machine-chest-press",
+        "incline-db-press"
+      ]
     }
   ],
   "templates": [
     {
-      "id": "day-1-cst",
-      "name": "Day 1 — Chest, Shoulders, Triceps",
+      "id": "day-1-push",
+      "name": "Day 1 — Push (Chest, Front Delts, Triceps)",
       "exerciseIds": [
+        "weighted-dip",
         "incline-db-press",
-        "pec-deck",
-        "cable-lateral-raise",
-        "cable-pushdown"
+        "db-shoulder-press",
+        "cable-pushdown",
+        "cable-lateral-raise"
       ]
     },
     {
-      "id": "day-2-legs",
-      "name": "Day 2 — Legs",
+      "id": "day-2-pull",
+      "name": "Day 2 — Pull (Back, Biceps)",
       "exerciseIds": [
-        "leg-press",
-        "romanian-deadlift",
-        "leg-extension",
-        "seated-leg-curl"
-      ]
-    },
-    {
-      "id": "day-3-bb",
-      "name": "Day 3 — Back & Biceps",
-      "exerciseIds": [
-        "wide-grip-pulldown",
+        "weighted-pullup",
         "chest-supported-row",
-        "reverse-pec-deck",
+        "wide-grip-pulldown",
         "incline-db-curl"
       ]
     },
     {
-      "id": "day-4-acc",
-      "name": "Day 4 — Accessory (optional)",
+      "id": "day-3-legs",
+      "name": "Day 3 — Legs",
       "exerciseIds": [
-        "neck-curl",
-        "wrist-roller",
-        "cable-crunch",
+        "back-squat",
+        "romanian-deadlift",
+        "leg-extension",
+        "seated-leg-curl",
         "standing-calf-raise"
+      ]
+    },
+    {
+      "id": "day-4-sa",
+      "name": "Day 4 — Shoulders, Arms & Abs",
+      "exerciseIds": [
+        "db-shoulder-press",
+        "cable-lateral-raise",
+        "reverse-pec-deck",
+        "incline-db-curl",
+        "cable-pushdown",
+        "cable-crunch"
       ]
     }
   ],
@@ -1692,8 +1726,9 @@
     },
     {
       "muscle": "frontDelts",
-      "minSetsPerWeek": 4,
-      "maxSetsPerWeek": 16
+      "minSetsPerWeek": 6,
+      "maxSetsPerWeek": 16,
+      "priority": 2
     },
     {
       "muscle": "forearms",

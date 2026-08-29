@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { Exercise, IsoDate } from '@overload/engine';
+import { elapsedSeconds, firstWorkingSetAt, type Exercise, type IsoDate } from '@overload/engine';
 import { db } from '../../db/db.js';
-import { setSessionFlags, startSession } from '../../db/queries.js';
+import { finishSession, setSessionFlags, startSession } from '../../db/queries.js';
 import { go } from '../../lib/route.js';
-import { longDate } from '../../lib/format.js';
+import { duration, longDate } from '../../lib/format.js';
 import { useRestTimer } from '../../lib/useRestTimer.js';
 import { LiftSheet } from './LiftSheet.js';
 import { CheckIn } from './CheckIn.js';
@@ -65,8 +65,13 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
 
     const plannedIds = new Set(slots.map((s) => s.exerciseId));
 
+    let firstWorkAt: string | null = null;
     if (sessionId) {
-      for (const s of await db.sets.where('sessionId').equals(sessionId).toArray()) {
+      const sessionSets = await db.sets.where('sessionId').equals(sessionId).toArray();
+      // The gym clock starts on the first WORKING set, not a warm-up — see
+      // firstWorkingSetAt. Derived here, never stored.
+      firstWorkAt = firstWorkingSetAt(sessionSets);
+      for (const s of sessionSets) {
         // Anything logged today that the template does not contain is a
         // substitution — the squat rack was taken, or a machine was broken. It
         // belongs on the rail, otherwise the sets exist in the database and
@@ -96,8 +101,22 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
       originalById: new Map(
         originals.filter((e): e is Exercise => !!e).map((e) => [e.id, e]),
       ),
+      firstWorkAt,
     };
   }, [templateId, sessionId, pending]);
+
+  // The gym clock. Start is the first working set (derived above); end is now
+  // while training, or the stored finish once done. A once-a-second tick keeps
+  // the live number moving; it stops as soon as the session is finished.
+  const firstWorkAt = data?.firstWorkAt ?? null;
+  const finishedAt = data?.session?.finishedAt ?? null;
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [finalSeconds, setFinalSeconds] = useState<number | null>(null);
+  useEffect(() => {
+    if (!firstWorkAt || finishedAt) return;
+    const t = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [firstWorkAt, finishedAt]);
 
   if (data === undefined || !sessionId) return <div className="empty">Opening the session…</div>;
   if (data === null) {
@@ -115,6 +134,29 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
   }
 
   const { template, exercises, session, setCounts, slotFor, swaps, skips, originalById } = data;
+
+  const gymSeconds = firstWorkAt
+    ? elapsedSeconds(firstWorkAt, finishedAt ?? new Date(nowMs).toISOString())
+    : null;
+
+  // Finished: the whole screen becomes the summary — the one moment the gym
+  // time is the point, not the next lift.
+  if (finalSeconds !== null) {
+    return (
+      <main>
+        <section className="sheet finish-summary">
+          <p className="eyebrow">Session complete</p>
+          <h1>{template.name}</h1>
+          <p className="gym-time-total tnum">{duration(finalSeconds)}</p>
+          <p className="hint">Time in the gym — first working set to finish, pauses included.</p>
+          <button className="log-button" onClick={() => go('/')}>
+            Done
+          </button>
+        </section>
+      </main>
+    );
+  }
+
   const supersetsOff = session?.supersetsOff ?? false;
   const index = Math.max(
     0,
@@ -142,6 +184,12 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
         <div>
           <h1>{template.name}</h1>
           <p className="day-row-meta">{longDate(date)}</p>
+          {gymSeconds !== null && (
+            <p className="gym-clock">
+              <span className="muted">In the gym</span>{' '}
+              <span className="tnum">{duration(gymSeconds)}</span>
+            </p>
+          )}
         </div>
         <label className="toggle">
           <input
@@ -248,7 +296,23 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
             advancePast(exercise.id);
           }}
           rest={rest}
-          onFinished={() => advancePast(exercise.id)}
+          onFinished={() => {
+            const at = exercises.findIndex((e) => e.id === exercise.id);
+            const isLastNow = at >= exercises.length - 1;
+            if (!isLastNow) {
+              advancePast(exercise.id);
+              return;
+            }
+            // Finishing the last lift stamps the finish time and freezes the
+            // gym-time total for the summary screen. An empty session (no
+            // working set) just goes home — there is no time to show.
+            if (firstWorkAt) {
+              void finishSession(sessionId);
+              setFinalSeconds(elapsedSeconds(firstWorkAt, new Date().toISOString()));
+            } else {
+              go('/');
+            }
+          }}
         />
       )}
 

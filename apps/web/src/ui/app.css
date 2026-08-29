@@ -153,6 +153,34 @@ h2 {
   color: var(--ink-45);
 }
 
+/* Gym clock — wall-clock time in the gym, first working set to finish. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.gym-clock {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--ink-45);
+}
+
+.gym-clock .tnum {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.finish-summary {
+  text-align: center;
+}
+
+.gym-time-total {
+  font-size: clamp(2.75rem, 13vw, 4.25rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0.6rem 0 0.35rem;
+}
+
 .day-row-go {
   font-size: var(--step-2);
   color: var(--ink-25);

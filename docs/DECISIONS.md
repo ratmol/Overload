@@ -857,6 +857,57 @@ to 291 (217 engine + 74 app).
 
 ---
 
+## 30. Program v6: a four-day PPL split, and a gym-session timer
+
+Two requests in one turn. Both shipped; the reasoning that needed a decision is
+below.
+
+**The program (v6, `plan.json`).** The 1x4 Method's isolation-only design was
+replaced with a four-day Push / Pull / Legs / Shoulders-Arms-Abs split, still
+failure-trained but with the big compounds mixed back in (weighted dip on Push,
+weighted pull-up on Pull, back squat on Legs). Every exercise is now **two** work
+sets. Front delts became the stated priority — a new `db-shoulder-press` (front
+delts as the primary mover) appears on both Push and Day 4, and `frontDelts`
+became a priority-2 volume target at a 6-set floor. Abs (cable crunch) live on
+Day 4. Like every version bump before it this is a pure data change: templates
+replaced, the lifts they name retuned, every earlier exercise kept in the
+library so old logged sets still resolve.
+
+**The one judgment call: failure on the compounds.** "Make every exercise 2 sets
+of failure" collides with reintroducing the back squat — two sets of a barbell
+squat to *absolute* failure is the highest-injury-risk thing in a gym (you fail a
+squat by getting pinned under it). Put to the user as an explicit choice; they
+picked the coached carve-out. So isolation is `targetRirBySet: [0]` (true
+failure) and the four systemic lifts — squat, RDL, weighted pull-up, weighted dip
+— are `[1]` (form-failure, stop when form breaks). `plan.test.ts` pins exactly
+that split. "Not to failure on a deload" needed nothing in the data:
+`deloadPrescription` already overrides the ladder to RIR 4 and halves the sets
+(§ progression), so two failure sets become one back-off set automatically.
+
+The honest cost, pinned as tests: the PPL structure carries no dedicated
+upper-chest or lat-width work, so those two old priorities read `under` on the
+volume screen (each gets ~2 sets against a 6-set floor). Front and side delts —
+the shoulders the split actually trains — land in range. Called out in
+`plan.test.ts`, not fixed behind the user's back; adding a lift is their call.
+
+**The timer.** Wall-clock time in the gym, first working set to finish,
+"regardless of pauses". Built engine-first: `session.ts` has pure, tested
+`firstWorkingSetAt` (warm-ups do not start the clock — the button that starts it
+is literally "Log set 1", not "Log warm-up"), `elapsedSeconds` (clamped
+non-negative, so a backwards device clock cannot report a negative session), and
+`gymTimeSeconds`. Only one new stored field — `Session.finishedAt`, the instant
+the user tapped Finish; the START stays derived from the first set, keeping to
+"nothing derived is stored" (§5). `SessionScreen` shows a once-a-second live
+clock during the session and a full-screen total on finish. Verified by driving
+the real app: the clock started on the first working set, ticked in real time
+while the rest timer ran independently, the finish summary showed the total, and
+reopening the finished session showed the frozen time rather than a ticking one.
+
+**Reversible?** The program is data plus one new exercise; the timer is one
+optional schema field, one pure engine module, and UI. Git history holds v5.
+
+---
+
 <!--
 Template for new entries:
 

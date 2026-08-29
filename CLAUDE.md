@@ -19,32 +19,35 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 291 tests
-(217 engine, 74 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 299 tests
+(225 engine, 74 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
 the weekly volume audit, sync groundwork (schema + local tracking, no client
 yet), and food logging — a personal list plus barcode scanning against Open
 Food Facts. See DECISIONS §16 and §22.
 
-`data/plan.json` is **program v5** — the 1x4 Method (Eric Evans): 4 exercises
-a session, one warm-up at 50% plus one work set to absolute failure, 6-10
-reps with double progression, three main days plus one optional accessory
-day. It replaced v3's rolling Upper/Lower cycle wholesale. Source is a photo
-of the routine in `docs/` (there is no prose spec document for this one, unlike
-`PROGRAM-V3.md` one directory up); DECISIONS §28 has the full transcription
-and every deliberate deviation from it. §23-24 still apply — the rotation and
-session-counted-deload machinery they describe was built for a program with
-no fixed week, and v5 reuses the rotation half (4 templates, same queue logic)
-while going back to a calendar-week deload (§28) since this program, unlike
-v3, has a fixed week. A plan version bump overwrites existing exercises
-(DECISIONS §18); it used to be additive-only, which made v2 undeliverable.
+`data/plan.json` is **program v6** — a four-day Push / Pull / Legs /
+Shoulders-Arms-Abs split. Failure training with the big compounds mixed back
+in: weighted dip (Push), weighted pull-up (Pull), back squat (Legs). Every
+exercise is two work sets — isolation to true failure (RIR 0), the systemic
+compounds (squat, RDL, weighted pull-up/dip) capped at form-failure (RIR 1);
+a deload drops both to one back-off set at RIR 4 automatically
+(`deloadPrescription`, so "not to failure on a deload" needs nothing in the
+data). Front delts are the priority — a dedicated DB shoulder press on both
+Push and Day 4 — and abs live on Day 4. It replaced v5's 1x4 Method, which had
+replaced v3's rolling Upper/Lower cycle; DECISIONS §30 has the full rationale
+(§28 covers v5). §23-24 still apply — the rotation machinery is reused (4
+templates, same queue logic) with a calendar-week deload since this program has
+a fixed week. A plan version bump overwrites existing exercises (DECISIONS §18);
+every earlier exercise stays in the library so old logged sets still resolve.
 
-**`apps/web/test/plan.test.ts` pins v5's honest cost, not a bug.** The 1x4
-Method trades volume for intensity: 16 work sets across a full four-day week
-versus v3's ~70, so every priority muscle lands under the user's own,
-unchanged volume targets. That is recorded as explicit "REGRESSION" tests —
-the method working as specified, not something to quietly fix. Worth a look
-before assuming the volume screen reads green.
+**`apps/web/test/plan.test.ts` pins v6's honest gaps, not bugs.** The PPL
+structure carries no dedicated upper-chest or lat-width work, so those two
+older priorities read `under` on the volume screen (~2 sets against a 6-set
+floor) while front and side delts — the shoulders it actually trains — land in
+range. Recorded as explicit "REGRESSION" tests — the split working as asked,
+not something to quietly fix. Worth a look before assuming the volume screen
+reads all green.
 
 **Two acceptance tests are still open, and neither is a coding task:**
 
@@ -116,7 +119,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (217 engine + 74 app)
+npm test                  # vitest, both workspaces (225 engine + 74 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -144,6 +147,7 @@ packages/engine/src/
   progression.ts  System load + double progression state machine
   deload.ts       Trigger detection
   rotation.ts     Next-in-rotation + rest-day rule for a program with no week
+  session.ts      Gym-session timing: first working set -> finish, pure
   volume.ts       Weekly hard-set audit per muscle
   food.ts         Portion maths, foodLog/intake reconciliation, macro-energy
                   validation for third-party (barcode) data

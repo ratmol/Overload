@@ -1,14 +1,15 @@
 /**
  * Pins the program's own claims about itself.
  *
- * `plan.json` is program v5 — the 1x4 Method (Eric Evans): 4 exercises per
- * session, one warm-up at 50% plus ONE work set to failure, 6-10 reps, double
- * progression. Three main days plus one optional accessory day. This is a
- * deliberate, large step down in volume from v3's rolling ~70 sets/week, and
- * the tests at the bottom pin that reality rather than pretending the volume
- * screen will read green: against the user's own targets, the method
- * under-doses every priority muscle. That is the method's trade (less volume,
- * more intensity), made visible, not a bug to fix.
+ * `plan.json` is program v6 — a four-day Push / Pull / Legs / Shoulders-Arms-Abs
+ * split, failure training with the big compounds mixed back in. Every exercise
+ * is TWO work sets: isolation to true failure (RIR 0), and the systemic
+ * compounds (squat, RDL, weighted pull-up, weighted dip) stopped at
+ * form-failure (RIR 1) — a coached carve-out, since you fail a squat by getting
+ * pinned under it. Front delts are the priority: a dedicated DB shoulder press
+ * on both Push and Day 4. Deload is handled entirely by the engine
+ * (`deloadPrescription` forces RIR 4 and halves the sets), so "not to failure
+ * on a deload" needs nothing in the data.
  */
 import { describe, expect, it } from 'vitest';
 import { Plan, auditVolume, type MuscleGroup, type SetLog } from '@overload/engine';
@@ -17,22 +18,19 @@ import planJson from '../../../data/plan.json';
 const plan = Plan.parse(planJson);
 const byId = new Map(plan.exercises.map((e) => [e.id, e]));
 const scheduledIds = () => new Set(plan.templates.flatMap((t) => t.exerciseIds));
-const mainDayIds = () =>
-  new Set(plan.templates.filter((t) => t.id !== 'day-4-acc').flatMap((t) => t.exerciseIds));
 
-/**
- * One full week of the program: every template once, dated across a 7-day
- * window so a single `auditVolume` sweep catches all four. `auditVolume`
- * just counts real dated sets — there is no program-awareness in it.
- */
+/** The systemic lifts capped at form-failure (RIR 1). Everything else is RIR 0. */
+const COMPOUNDS = new Set(['weighted-dip', 'weighted-pullup', 'back-squat', 'romanian-deadlift']);
+
+/** One full week: every template once, dated so a 7-day sweep catches all four. */
 function perWeekVolume() {
   const sets: SetLog[] = [];
   const sessionDates = new Map<string, string>();
   const dayOffsets: Record<string, number> = {
-    'day-1-cst': 1,
-    'day-2-legs': 2,
-    'day-3-bb': 4,
-    'day-4-acc': 5,
+    'day-1-push': 1,
+    'day-2-pull': 2,
+    'day-3-legs': 4,
+    'day-4-sa': 5,
   };
 
   plan.templates.forEach((template) => {
@@ -64,86 +62,81 @@ function perWeekVolume() {
     exercises: plan.exercises,
     targets: plan.volumeTargets,
   });
-  return { rows, totalSets: sets.length };
+  const statusOf = (m: MuscleGroup) => rows.find((r) => r.muscle === m)!.status;
+  return { rows, statusOf, totalSets: sets.length };
 }
 
-describe('plan.json is the 1x4 Method (program v5)', () => {
-  it('parses against the engine schema, at file version 5', () => {
-    // The FILE version counts migrations, not program revisions. v4 was the
-    // rolling v3 program; this migration replaces it wholesale with the 1x4
-    // Method — a version bump overwrites templates and the exercises it names.
-    expect(plan.version).toBe(5);
+describe('plan.json is the PPL split (program v6)', () => {
+  it('parses against the engine schema, at file version 6', () => {
+    expect(plan.version).toBe(6);
   });
 
-  it('falls back to a calendar deload — the 1x4 Method has a fixed week', () => {
-    // v3 counted deloads by session because it had no week. The 1x4 Method is
-    // a fixed 3(+1)-day split, so the session-counted timer is gone and the
-    // engine uses deloadEveryWeeks again.
+  it('keeps the calendar deload — a fixed weekly split, no session counter', () => {
     expect(plan.deloadEverySessions).toBeUndefined();
     expect(plan.deloadEveryWeeks).toBe(6);
   });
 
-  it('is four days, in Day 1-4 order, four exercises each', () => {
+  it('is Push, Pull, Legs, then Shoulders/Arms/Abs', () => {
     expect(plan.templates.map((t) => t.id)).toEqual([
-      'day-1-cst',
-      'day-2-legs',
-      'day-3-bb',
-      'day-4-acc',
+      'day-1-push',
+      'day-2-pull',
+      'day-3-legs',
+      'day-4-sa',
     ]);
-    for (const template of plan.templates) {
-      expect(template.exerciseIds, template.id).toHaveLength(4);
-    }
   });
 
-  it('prescribes exactly one work set on every scheduled exercise', () => {
-    // The whole method: "1 work set taken to absolute failure." Not two, not a
-    // ladder. A stray defaultSets of 2 silently doubles the day.
+  it('prescribes exactly two work sets on every scheduled exercise', () => {
+    // "Make every exercise 2 sets." A stray 1 or 3 silently changes the dose.
     for (const id of scheduledIds()) {
-      expect(byId.get(id)!.defaultSets, `${id} is not a single work set`).toBe(1);
+      expect(byId.get(id)!.defaultSets, `${id} is not two sets`).toBe(2);
     }
   });
 
-  it('takes every scheduled work set to failure — RIR 0', () => {
-    // "Absolute failure with good form." v3's rule that systemic lifts never
-    // reach RIR 0 is deliberately gone: the 1x4 Method fails on everything,
-    // including the RDL and the presses. That is the method, and the risk of
-    // it is called out in the exercise notes, not hidden.
+  it('caps the systemic compounds at form-failure and fails everything else', () => {
+    // The coached split: isolation to true failure (RIR 0), but squat, RDL and
+    // the weighted body-weight lifts stop the rep form breaks (RIR 1). Deload
+    // overrides all of this to RIR 4 in the engine — see deloadPrescription.
     for (const id of scheduledIds()) {
-      expect(byId.get(id)!.targetRirBySet, `${id} has no RIR target`).toEqual([0]);
+      const expected = COMPOUNDS.has(id) ? [1] : [0];
+      expect(byId.get(id)!.targetRirBySet, `${id} RIR`).toEqual(expected);
     }
   });
 
-  it('runs the three main days at 6-10 reps, the method\'s progression window', () => {
-    // "6-10 reps. When you hit 10 clean reps, increase the weight next session
-    // and drop back to 6." The accessory day is intentionally exempt — the
-    // post gives no rep target for it, so neck/grip/ab work keeps sane ranges.
-    for (const id of mainDayIds()) {
-      expect(byId.get(id)!.defaultRepRange, `${id} is off the 6-10 window`).toEqual([6, 10]);
-    }
+  it('brings the big compounds back — a dip, a pull-up and a squat', () => {
+    // The whole point of the revision: the 1x4 Method was isolation-only, this
+    // one is built on the compounds again.
+    expect(scheduledIds().has('weighted-dip')).toBe(true);
+    expect(scheduledIds().has('weighted-pullup')).toBe(true);
+    expect(scheduledIds().has('back-squat')).toBe(true);
   });
 
-  it('runs straight sets, not supersets — no scheduled exercise carries a group', () => {
-    // v3 supersetted antagonists to fit ~19 sets in 34 minutes. The 1x4 Method
-    // is four straight sets. A leftover supersetGroup would make the session
-    // screen silently pair two lifts the method means to run one at a time.
+  it('runs straight sets — no scheduled exercise carries a superset group', () => {
     for (const id of scheduledIds()) {
       expect(byId.get(id)!.supersetGroup, `${id} still has a superset group`).toBeUndefined();
     }
   });
 
-  it('adds the four exercises the method needs and the library did not have', () => {
-    expect(byId.get('cable-pushdown')!.muscles[0]!.muscle).toBe('triceps');
-    expect(byId.get('neck-curl')!.muscles[0]!.muscle).toBe('neck');
-    expect(byId.get('wrist-roller')!.muscles[0]!.muscle).toBe('forearms');
-    expect(byId.get('cable-crunch')!.muscles[0]!.muscle).toBe('abs');
+  it('prioritises front delts: a dedicated press on both Push and Day 4', () => {
+    // "I lack front-delt definition, prioritise that." A DB shoulder press with
+    // front delts as the primary mover, twice a week, plus a priority target.
+    const press = byId.get('db-shoulder-press')!;
+    expect(press.muscles[0]!.muscle).toBe('frontDelts');
+    expect(press.muscles[0]!.fraction).toBe(1);
+    const push = plan.templates.find((t) => t.id === 'day-1-push')!.exerciseIds;
+    const day4 = plan.templates.find((t) => t.id === 'day-4-sa')!.exerciseIds;
+    expect(push).toContain('db-shoulder-press');
+    expect(day4).toContain('db-shoulder-press');
+    const target = plan.volumeTargets.find((t) => t.muscle === ('frontDelts' as MuscleGroup))!;
+    expect(target.priority).toBeDefined();
   });
 
-  it('keeps every v3 exercise so old logged sets still resolve to a name', () => {
-    // Same precedent as v2 keeping the deadlift and v3 keeping the dip: a
-    // version bump drops exercises from the TEMPLATES, never from the library.
-    for (const id of ['back-squat', 'weighted-pullup', 'hip-thrust', 'bulgarian-split-squat']) {
+  it('puts abs on Day 4', () => {
+    expect(plan.templates.find((t) => t.id === 'day-4-sa')!.exerciseIds).toContain('cable-crunch');
+  });
+
+  it('keeps every earlier exercise so old logged sets still resolve', () => {
+    for (const id of ['leg-press', 'hip-thrust', 'neck-curl', 'wrist-roller', 'pec-deck']) {
       expect(byId.has(id), `${id} was orphaned`).toBe(true);
-      expect(scheduledIds().has(id), `${id} should be unscheduled now`).toBe(false);
     }
   });
 
@@ -165,45 +158,31 @@ describe('plan.json is the 1x4 Method (program v5)', () => {
   });
 
   // ------------------------------------------------------------------------
-  // The trade, made visible. The method spends volume to buy intensity, so
-  // against the user's UNCHANGED targets (their goals did not move) the audit
-  // reads under across the board. These pin that rather than quietly softening
-  // the targets to make the screen green.
+  // Delivered volume against the user's own targets. v6 is a real hypertrophy
+  // dose (40 work sets a week), so the priorities the split actually trains
+  // land in range — and the ones it doesn't are pinned as honest gaps, not
+  // smoothed over.
   // ------------------------------------------------------------------------
 
-  it('logs 16 work sets across a full four-day week — the method\'s ceiling', () => {
-    // 4 exercises x 1 set x 4 days. The three main days alone are 12; v3 ran
-    // ~70. This is the "less volume" half of "less volume, more intensity",
-    // stated as a number.
-    expect(perWeekVolume().totalSets).toBe(16);
+  it('logs 40 work sets across the four-day week', () => {
+    // 2 sets x (5 + 4 + 5 + 6) lifts. A real dose again after the 1x4 Method's 16.
+    expect(perWeekVolume().totalSets).toBe(40);
   });
 
-  it('REGRESSION: every priority muscle lands under target — 1 set a week each', () => {
-    // Side delts (P1), upper chest (P2), lat width and rear delts (P3),
-    // lower traps (P4) each get a single direct set per week under this
-    // program, far below the floors the user set for their own physique. The
-    // volume screen will read red on the levers the user cares about most.
-    // That is the honest cost of the switch, not something to engineer away.
-    const rows = perWeekVolume().rows;
-    const priority = rows.filter((r) => r.priority !== undefined);
-    expect(priority.length).toBeGreaterThan(0);
-    for (const row of priority) {
-      expect(row.status, `${row.muscle} (priority ${row.priority}) is ${row.status}`).toBe('under');
-    }
+  it('hits the shoulder priorities — front and side delts both in range', () => {
+    const { statusOf } = perWeekVolume();
+    expect(statusOf('frontDelts' as MuscleGroup)).toBe('in-range');
+    expect(statusOf('sideDelts' as MuscleGroup)).toBe('in-range');
   });
 
-  it('REGRESSION: nothing is over target — no muscle is even near its ceiling', () => {
-    // The mirror image of the above: one set to failure cannot overshoot a
-    // weekly maximum. Every muscle is at or below its floor.
-    for (const row of perWeekVolume().rows) {
-      expect(row.status, `${row.muscle} is ${row.status}`).not.toBe('over');
-    }
-  });
-
-  it('leaves the priority-1 lever, side delts, on a single weekly set', () => {
-    const rows = perWeekVolume().rows;
-    const sideDelts = rows.find((r) => r.muscle === ('sideDelts' as MuscleGroup))!;
-    expect(sideDelts.sets).toBe(1);
-    expect(sideDelts.status).toBe('under');
+  it('REGRESSION: upper chest and lat width stay under — the split does not train them directly', () => {
+    // Chest thickness/upper-chest (only the incline press feeds it) and lat
+    // width (only the wide pulldown) each get ~2 sets against a 6-set floor.
+    // These were priorities under the old program; the PPL structure the user
+    // asked for does not carry dedicated work for them. Called out, not fixed
+    // behind their back — adding a lift is a program decision.
+    const { statusOf } = perWeekVolume();
+    expect(statusOf('upperChest' as MuscleGroup)).toBe('under');
+    expect(statusOf('latsWidth' as MuscleGroup)).toBe('under');
   });
 });
