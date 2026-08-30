@@ -40,13 +40,32 @@ export async function seedIfNeeded(): Promise<SeedResult> {
     const isFirstRun = meta === undefined;
     const isUpgrade = meta !== undefined && meta.version < PLAN.version;
 
+    // Templates are reconciled against the plan on EVERY load, not gated
+    // behind isUpgrade. Gating it there was the actual bug in the first fix:
+    // a database already sitting on the current version never sees isUpgrade
+    // go true again, so a device that picked up v3's Upper/Lower rows
+    // (upper-a/lower-a/upper-b/lower-b) before this reconciliation existed
+    // would carry them forever even after this code shipped — the cleanup
+    // would only ever fire on the NEXT version bump, not retroactively on
+    // this one. Running it unconditionally, every load, fixes both the
+    // already-affected devices and the next migration. `bulkPut` alone only
+    // upserts and never removes a row whose id has dropped out of the plan,
+    // so the delete has to happen first. Cheap — a handful of rows — and a
+    // no-op once a device is actually clean.
+    const keptTemplateIds = new Set(PLAN.templates.map((t) => t.id));
+    const staleTemplateIds = (await db.templates.toCollection().primaryKeys()).filter(
+      (id) => !keptTemplateIds.has(id as string),
+    );
+    if (staleTemplateIds.length > 0) await db.templates.bulkDelete(staleTemplateIds);
+    await db.templates.bulkPut(PLAN.templates);
+
     if (!isFirstRun && !isUpgrade) {
       // Still insert anything genuinely new, so a hand-added exercise in the
       // same plan version is not lost.
       const added = PLAN.exercises.filter((e) => !existing.has(e.id));
       if (added.length > 0) await db.exercises.bulkAdd(added);
       return {
-        action: added.length > 0 ? 'seeded' : 'none',
+        action: added.length > 0 || staleTemplateIds.length > 0 ? 'seeded' : 'none',
         fromVersion: meta.version,
         toVersion: PLAN.version,
         exercisesAdded: added.length,
@@ -60,22 +79,6 @@ export async function seedIfNeeded(): Promise<SeedResult> {
     // `put` replaces the whole row. Correct here: every field on Exercise is
     // plan-owned, so there is nothing on the stored row worth preserving.
     await db.exercises.bulkPut(PLAN.exercises);
-
-    // Templates are replaced, not merged: v2 reorders them, drops the deadlift
-    // and the curl, and swaps flat bench for incline. `bulkPut` alone only
-    // upserts, though — it never removes a row whose id has dropped out of the
-    // plan entirely, which is exactly what happened when the v6 PPL split
-    // replaced v3's rolling Upper/Lower cycle (upper-a/lower-a/upper-b/lower-b
-    // have no equivalent in v6's four day-based ids). Those rows lingered in
-    // `db.templates` forever, and the Today screen listed them alongside the
-    // real program — sorted to the end, but never gone. Deleting whatever is
-    // NOT in the new plan first makes "replaced" actually mean replaced.
-    const keptIds = new Set(PLAN.templates.map((t) => t.id));
-    const staleIds = (await db.templates.toCollection().primaryKeys()).filter(
-      (id) => !keptIds.has(id as string),
-    );
-    if (staleIds.length > 0) await db.templates.bulkDelete(staleIds);
-    await db.templates.bulkPut(PLAN.templates);
 
     await db.plan.put({
       id: 'current',

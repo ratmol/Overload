@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.js';
+import { pruneEmptySessions } from './db/queries.js';
 import { seedIfNeeded } from './db/seed.js';
 import { requestPersistence } from './lib/persistence.js';
 import './ui/tokens.css';
@@ -15,7 +16,10 @@ void requestPersistence();
 
 // Seed before first paint so no screen ever renders an empty program and then
 // pops. A failure here is fatal and says so rather than showing a blank page.
-seedIfNeeded().then(
+// Pruning empty sessions runs alongside it, not after — it touches sessions
+// and sets, seeding touches exercises/templates/plan, so there is nothing to
+// sequence.
+Promise.all([seedIfNeeded(), pruneEmptySessions()]).then(
   () => root.render(
     <StrictMode>
       <App />

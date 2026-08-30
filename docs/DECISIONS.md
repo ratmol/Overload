@@ -963,6 +963,54 @@ untouched.
 
 ---
 
+## 32. §31's own fixes didn't reach an already-running device — a lesson about "fixed" vs "fixed for you"
+
+Deployed §31, was told the Upper/Lower rows and the double "in progress" were
+still there. Both reports were correct, and both were §31 being genuinely
+incomplete rather than the deploy failing — confirmed by diffing the live
+bundle byte-for-byte against the build that contained the fix. Two separate
+gaps, same shape: a fix that is only correct for events happening AFTER it
+ships, on a database that already has the bad state baked in from before.
+
+**The template cleanup was gated behind `isUpgrade`.** §31 deleted a stale
+template id, but only inside the `isFirstRun || isUpgrade` branch — the branch
+that runs on a version bump. A device already sitting on v6 (the plan version
+has not changed since §31 shipped) never sets `isUpgrade` true again, so the
+cleanup code was live but **structurally unreachable** for anyone not in the
+middle of an actual migration. It would have started working retroactively
+the day the plan bumps to v7 — everyone else keeps the dead rows forever.
+Fixed by moving the reconciliation out of the branch entirely: it now runs on
+every `seedIfNeeded()` call, unconditionally, and is a no-op once a device is
+clean (confirmed by a new test asserting exactly that). The test suite §31
+shipped never caught this because every test seeded a *version bump*
+scenario — there was no test for "already on the current version, still
+carrying a stale row", which is the actual shape of an already-deployed user.
+
+**The lazy session creation only stopped new empty rows.** §31's fix to
+`startSession` was correct on its own terms — a session opened purely to look
+no longer creates a row. But a device that had already opened Push and Pull
+before that code existed was carrying two real, empty session rows from
+before the fix, and nothing in §31 touched existing data. Those rows kept
+reading as "in progress" because the bug they came from had already happened;
+preventing it from happening again does nothing to data it already produced.
+Fixed with `pruneEmptySessions` — deletes any session with zero sets logged
+against it, run on every startup alongside seeding. This is also the thing
+that makes §31's "one accepted asymmetry" (a flag toggled with nothing logged
+still creates a row) stop mattering in practice: that row is empty, so it gets
+swept on the next load regardless of which write created it.
+
+**The actual lesson.** A migration or a lazy-write fix is only "done" for a
+device that has not yet touched the broken path. For everyone who already
+has, the fix needs an explicit reconciliation step run on real data, not just
+corrected logic for the next time the bad path would have fired. Worth
+checking for on every future migration in this file, not just these two.
+
+**Reversible?** Yes. `pruneEmptySessions` deletes rows with zero children,
+which by construction carried no information; the template reconciliation
+change only removes gating, not behavior.
+
+---
+
 <!--
 Template for new entries:
 

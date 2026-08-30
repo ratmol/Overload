@@ -74,6 +74,31 @@ export async function startSession(
 }
 
 /**
+ * Deletes every session with no sets logged against it.
+ *
+ * `startSession` stopped creating a row just from opening a session screen,
+ * but that only stops NEW empty rows — a device that already opened a day or
+ * two before that fix shipped is still carrying them, and each one reads as
+ * "in progress" on Today (and would have already counted toward the rotation
+ * queue and the session-counted deload timer). A session with zero sets
+ * carries no information anything in the app reads, so this is safe to run
+ * on every startup rather than once: harmless if nothing is empty, and it
+ * also mops up the one remaining gap where toggling a flag (deload, a swap)
+ * before logging anything still creates a row — see DECISIONS §31/§32.
+ */
+export async function pruneEmptySessions(): Promise<void> {
+  const sessionIdsWithSets = new Set(
+    (await db.sets.orderBy('sessionId').uniqueKeys()) as string[],
+  );
+  const emptyIds = (await db.sessions.toCollection().primaryKeys()).filter(
+    (id) => !sessionIdsWithSets.has(id as string),
+  );
+  if (emptyIds.length === 0) return;
+  await db.sessions.bulkDelete(emptyIds);
+  await tombstone('sessions', emptyIds as string[]);
+}
+
+/**
  * Stamp the moment the session was finished. The gym-time total is computed
  * from this and the first working set — see `gymTimeSeconds`; nothing derived
  * is stored.

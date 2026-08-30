@@ -19,8 +19,8 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 307 tests
-(225 engine, 82 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 312 tests
+(225 engine, 87 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
 the weekly volume audit, sync groundwork (schema + local tracking, no client
 yet), and food logging — a personal list plus barcode scanning against Open
@@ -119,7 +119,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (225 engine + 82 app)
+npm test                  # vitest, both workspaces (225 engine + 87 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -198,6 +198,17 @@ and `accumulationSessionsSince` both key off "a session exists for this date",
 so creating one just because a session screen was opened silently advances the
 rotation and the deload timer. The row is created lazily, on the first actual
 write (`ensureSessionId` in SessionScreen) — see DECISIONS §31.
+
+**A migration fix only reaches devices that migrate again.** §31's first pass
+at the bullet above gated the template cleanup behind `isUpgrade` — correct
+for the NEXT version bump, dead code for every device already on the current
+version, which is everyone who had already hit the bug. Same trap nearly
+happened with the session fix: stopping new empty sessions did nothing about
+the empty ones a device already had. Both needed an explicit reconciliation
+run on every load (`seedIfNeeded`'s unconditional template diff,
+`pruneEmptySessions`), not just corrected logic for the next occurrence. See
+DECISIONS §32 before trusting that a migration fix is done just because the
+code path that produced the bug no longer runs.
 
 ## What not to build
 
