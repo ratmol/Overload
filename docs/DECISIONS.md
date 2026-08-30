@@ -908,6 +908,61 @@ optional schema field, one pure engine module, and UI. Git history holds v5.
 
 ---
 
+## 31. Two real bugs found rechecking v6: dead Upper/Lower rows, and a session that started itself
+
+Asked to reverify v6 — reading nutrition and session code the way a
+nutritionist or a fresh-user pass would use it, since a browser driver was not
+available in this environment (a code trace, not the real-app pass §27 and §30
+got). It found two things, both fixed.
+
+**Migrating a plan version never actually deleted a template.** §30 says
+"templates replaced, not merged" and `seed.ts`'s own comment said the same —
+but the code was `db.templates.bulkPut(PLAN.templates)`, and `bulkPut` only
+upserts. Every version bump since v3 (`upper-a`/`lower-a`/`upper-b`/`lower-b`,
+the old rolling Upper/Lower cycle) left those four rows sitting in
+`db.templates` forever, because nothing had a reason to write to them — v5 and
+v6 both introduced entirely new template ids and never touched the old ones.
+`TodayScreen` lists every row in that table, so the dead Upper/Lower days kept
+showing up underneath the real four-day program (sorted to the end, per its
+own "anything not in the plan's list sorts to the end rather than
+disappearing" comment — visible, not gone). Fixed by deleting whatever id is
+not in the incoming plan before the `bulkPut`, exactly once, on the same
+migration path. `seed.test.ts` pins it by seeding a fake pre-v6 database
+(the real `upper-a`/`lower-a` ids) and asserting they are gone after
+`seedIfNeeded()`, while a hand-added template with no version to migrate from
+survives untouched.
+
+**Opening a session screen created the session.** Deliberate as of §30's
+timer work — "created on arrival... so a session you walked out of still
+exists as a record of the day" — but that reasoning only covers actually
+training and getting interrupted. It also covered the much more common case of
+tapping into a day purely to see what is programmed, then backing out having
+logged nothing. That is not a cosmetic problem: `nextInRotation` and
+`accumulationSessionsSince` (packages/engine/src/rotation.ts) both key off "a
+session row exists for this date", not off any set being logged, so a bare
+look silently advanced the rotation queue and ticked up the session-counted
+deload timer. Fixed by splitting the read from the write: `existingSessionId`
+looks a row up without creating one, and `startSession` (renamed nowhere,
+same function) now only ever gets called lazily, at the first thing that
+actually needs to persist — a logged set, a deload/superset toggle, a swap, a
+skip. `queries.test.ts` pins the read side (looking creates nothing;
+`startSession` is idempotent and keyed per template+date); the write side is
+exercised by every existing session test that still passes with a session
+created out from under it instead of in front of it.
+
+**One accepted asymmetry.** A flag toggled before any set is logged — previewing
+the deload prescription, then leaving — still creates the session row, same as
+before. Only a bare look-and-leave with zero interaction is now free. Drawing
+the line at "any write" rather than "specifically a set" keeps one function
+(`ensureSessionId`) instead of buffering pending flag changes until a set
+exists; revisit if toggle-then-abandon turns out to be common enough to matter.
+
+**Reversible?** Yes, both are data-migration and query-layer changes with no
+schema shape change; `finishedAt`, `Session`, and every other stored shape are
+untouched.
+
+---
+
 <!--
 Template for new entries:
 

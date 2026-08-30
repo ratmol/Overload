@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { elapsedSeconds, firstWorkingSetAt, type Exercise, type IsoDate } from '@overload/engine';
 import { db } from '../../db/db.js';
-import { finishSession, setSessionFlags, startSession } from '../../db/queries.js';
+import { existingSessionId, finishSession, setSessionFlags, startSession } from '../../db/queries.js';
 import { go } from '../../lib/route.js';
 import { duration, longDate } from '../../lib/format.js';
 import { useRestTimer } from '../../lib/useRestTimer.js';
@@ -11,7 +11,11 @@ import { CheckIn } from './CheckIn.js';
 import { AddLift } from './AddLift.js';
 
 export function SessionScreen({ templateId, date }: { templateId: string; date: IsoDate }) {
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // `undefined` = still checking whether today's session exists; `null` =
+  // checked, and it does not, because nothing has been logged yet. Opening
+  // this screen must not itself create the row — see `startSession`'s
+  // comment for why that used to happen and what it broke.
+  const [sessionId, setSessionId] = useState<string | null | undefined>(undefined);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   /**
@@ -27,17 +31,25 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
   // exactly the moment you were resting and looking at it.
   const rest = useRestTimer();
 
-  // The session row is created on arrival rather than on the first logged set,
-  // so that a session you walked out of still exists as a record of the day.
   useEffect(() => {
     let live = true;
-    void startSession(templateId, date, false).then((id) => {
+    void existingSessionId(templateId, date).then((id) => {
       if (live) setSessionId(id);
     });
     return () => {
       live = false;
     };
   }, [templateId, date]);
+
+  // Creates the session row on the first real write, if it does not exist
+  // yet. Safe to call repeatedly — `startSession` itself is find-or-create,
+  // and this just also caches the id in state once known.
+  async function ensureSessionId(): Promise<string> {
+    if (sessionId) return sessionId;
+    const id = await startSession(templateId, date, false);
+    setSessionId(id);
+    return id;
+  }
 
   const data = useLiveQuery(async () => {
     const template = await db.templates.get(templateId);
@@ -118,7 +130,9 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
     return () => clearInterval(t);
   }, [firstWorkAt, finishedAt]);
 
-  if (data === undefined || !sessionId) return <div className="empty">Opening the session…</div>;
+  if (data === undefined || sessionId === undefined) {
+    return <div className="empty">Opening the session…</div>;
+  }
   if (data === null) {
     return (
       <main>
@@ -195,7 +209,10 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
           <input
             type="checkbox"
             checked={isDeload}
-            onChange={(e) => void setSessionFlags(sessionId, { isDeload: e.target.checked })}
+            onChange={(e) => {
+              const isDeload = e.target.checked;
+              void ensureSessionId().then((id) => setSessionFlags(id, { isDeload }));
+            }}
           />
           Deload
         </label>
@@ -205,7 +222,10 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
         <input
           type="checkbox"
           checked={supersetsOff}
-          onChange={(e) => void setSessionFlags(sessionId, { supersetsOff: e.target.checked })}
+          onChange={(e) => {
+            const supersetsOff = e.target.checked;
+            void ensureSessionId().then((id) => setSessionFlags(id, { supersetsOff }));
+          }}
         />
         Straight sets — no supersets today
       </label>
@@ -255,6 +275,7 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
           key={exercise.id}
           exercise={exercise}
           sessionId={sessionId}
+          ensureSessionId={ensureSessionId}
           date={date}
           isDeload={isDeload}
           isLast={index >= exercises.length - 1}
@@ -275,7 +296,7 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
             const next = { ...swaps };
             if (replacementId === null || replacementId === slot) delete next[slot];
             else next[slot] = replacementId;
-            void setSessionFlags(sessionId, { swaps: next });
+            void ensureSessionId().then((id) => setSessionFlags(id, { swaps: next }));
             setCurrentId(replacementId ?? slot);
           }}
           onSkip={() => {
@@ -285,7 +306,7 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
               // rest of today but is back on its own next time this template
               // comes up. Also drop any swap on it — nothing left to swap.
               if (!skips.includes(slot)) {
-                void setSessionFlags(sessionId, { skips: [...skips, slot] });
+                void ensureSessionId().then((id) => setSessionFlags(id, { skips: [...skips, slot] }));
               }
             } else {
               // An ad-hoc addition nobody has logged a set against yet.
@@ -305,8 +326,9 @@ export function SessionScreen({ templateId, date }: { templateId: string; date: 
             }
             // Finishing the last lift stamps the finish time and freezes the
             // gym-time total for the summary screen. An empty session (no
-            // working set) just goes home — there is no time to show.
-            if (firstWorkAt) {
+            // working set, and therefore no session row at all yet) just
+            // goes home — there is no time to show.
+            if (firstWorkAt && sessionId) {
               void finishSession(sessionId);
               setFinalSeconds(elapsedSeconds(firstWorkAt, new Date().toISOString()));
             } else {

@@ -42,6 +42,7 @@ interface PadState {
 export function LiftSheet({
   exercise,
   sessionId,
+  ensureSessionId,
   date,
   isDeload,
   isLast,
@@ -54,7 +55,10 @@ export function LiftSheet({
   onFinished,
 }: {
   exercise: Exercise;
-  sessionId: string;
+  /** `null` until the first set is logged against today's session — see queries.ts. */
+  sessionId: string | null;
+  /** Creates today's session row on first use. Call this, not `sessionId`, when writing. */
+  ensureSessionId: () => Promise<string>;
   date: IsoDate;
   isDeload: boolean;
   isLast: boolean;
@@ -89,8 +93,10 @@ export function LiftSheet({
 
   const data = useLiveQuery(async () => {
     const [logged, history, weights] = await Promise.all([
-      setsForExerciseInSession(exercise.id, sessionId),
-      performanceHistory(exercise.id, { excludeSessionId: sessionId }),
+      // No session yet means nothing has been logged against it — trivially
+      // true, since the session only starts existing at the first log.
+      sessionId ? setsForExerciseInSession(exercise.id, sessionId) : Promise.resolve([]),
+      performanceHistory(exercise.id, sessionId ? { excludeSessionId: sessionId } : {}),
       db.weights.orderBy('date').toArray(),
     ]);
     return { logged, history, bodyweight: bodyweightOn(date, weights) };
@@ -158,8 +164,9 @@ export function LiftSheet({
 
   async function onLog() {
     const wasWarmup = pad!.isWarmup;
+    const id = await ensureSessionId();
     await logSet({
-      sessionId,
+      sessionId: id,
       exerciseId: exercise.id,
       addedWeightLb: pad!.load,
       reps: pad!.reps,

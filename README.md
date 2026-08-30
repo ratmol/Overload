@@ -10,7 +10,7 @@ account — signing in turns sync on, it is not a gate on the product. This
 supersedes an earlier "no server, no account, no sync"; see
 [DECISIONS section 21](docs/DECISIONS.md) for what that cost and why.
 
-**Status:** both halves are built and wired together. 299 tests. The app logs
+**Status:** both halves are built and wired together. 307 tests. The app logs
 training, tracks the weight trend, estimates expenditure with an explicit
 confidence level, and proposes calorie changes with a written reason for each
 one.
@@ -31,7 +31,7 @@ the confidence model as a description of the engine's own opinion, not evidence.
 ```bash
 npm install
 npm run dev        # the app, on :5173
-npm test           # 225 engine + 74 app tests
+npm test           # 225 engine + 82 app tests
 npm run typecheck
 npm run build      # static bundle in apps/web/dist
 ```

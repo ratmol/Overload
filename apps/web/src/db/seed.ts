@@ -62,9 +62,19 @@ export async function seedIfNeeded(): Promise<SeedResult> {
     await db.exercises.bulkPut(PLAN.exercises);
 
     // Templates are replaced, not merged: v2 reorders them, drops the deadlift
-    // and the curl, and swaps flat bench for incline. A merge would leave the
-    // old exercise ids in place, which is the exact failure this migration
-    // exists to fix.
+    // and the curl, and swaps flat bench for incline. `bulkPut` alone only
+    // upserts, though — it never removes a row whose id has dropped out of the
+    // plan entirely, which is exactly what happened when the v6 PPL split
+    // replaced v3's rolling Upper/Lower cycle (upper-a/lower-a/upper-b/lower-b
+    // have no equivalent in v6's four day-based ids). Those rows lingered in
+    // `db.templates` forever, and the Today screen listed them alongside the
+    // real program — sorted to the end, but never gone. Deleting whatever is
+    // NOT in the new plan first makes "replaced" actually mean replaced.
+    const keptIds = new Set(PLAN.templates.map((t) => t.id));
+    const staleIds = (await db.templates.toCollection().primaryKeys()).filter(
+      (id) => !keptIds.has(id as string),
+    );
+    if (staleIds.length > 0) await db.templates.bulkDelete(staleIds);
     await db.templates.bulkPut(PLAN.templates);
 
     await db.plan.put({

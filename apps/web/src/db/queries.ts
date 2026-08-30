@@ -33,6 +33,33 @@ async function findSession(templateId: string, date: IsoDate) {
   return db.sessions.where('[templateId+date]').equals([templateId, date]).first();
 }
 
+/**
+ * Read-only lookup, for opening a session screen without creating a row.
+ *
+ * Opening a day just to see what is on it — then leaving — must not write
+ * anything. See `startSession` for the create side of this.
+ */
+export async function existingSessionId(templateId: string, date: IsoDate): Promise<string | null> {
+  const existing = await findSession(templateId, date);
+  return existing?.id ?? null;
+}
+
+/**
+ * Finds today's session for this template, or creates one on first write.
+ *
+ * A session row used to be created the moment the screen opened, so that a
+ * session you walked out of still existed as a record of the day. That also
+ * meant opening a day purely to look at what is on it — then backing out —
+ * created a real row: it showed as "in progress" on Today, and worse, it
+ * counted toward the rotation queue and the session-counted deload timer
+ * (`nextInRotation`, `accumulationSessionsSince` in packages/engine), which
+ * both key off "a session exists for this date", not off any set being
+ * logged. Looking, not training, was silently advancing the program.
+ *
+ * The row is created here instead, lazily, at the point of the first actual
+ * write — a set, a flag, a swap — so "opening a day" and "starting a
+ * session" are no longer the same action.
+ */
 export async function startSession(
   templateId: string,
   date: IsoDate,

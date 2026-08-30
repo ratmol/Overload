@@ -19,8 +19,8 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 299 tests
-(225 engine, 74 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 307 tests
+(225 engine, 82 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
 the weekly volume audit, sync groundwork (schema + local tracking, no client
 yet), and food logging — a personal list plus barcode scanning against Open
@@ -119,7 +119,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (225 engine + 74 app)
+npm test                  # vitest, both workspaces (225 engine + 82 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -186,6 +186,18 @@ in `trend.test.ts`; earlier calibrations produced 12% and 5% false-flag rates.
 
 **Every adjustment carries a reason string.** If a plain-English explanation
 cannot be generated, the change does not happen.
+
+**`bulkPut` upserts, it does not replace a set.** A plan migration that drops a
+template id (v3's Upper/Lower cycle, gone since v5) leaves the old row behind
+forever unless the migration explicitly deletes ids that fell out of the new
+plan first. See DECISIONS §31 — this is exactly the kind of thing a comment
+saying "replaced, not merged" can be wrong about while the code compiles fine.
+
+**A session row existing is not the same as training happening.** `nextInRotation`
+and `accumulationSessionsSince` both key off "a session exists for this date",
+so creating one just because a session screen was opened silently advances the
+rotation and the deload timer. The row is created lazily, on the first actual
+write (`ensureSessionId` in SessionScreen) — see DECISIONS §31.
 
 ## What not to build
 
