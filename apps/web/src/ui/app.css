@@ -129,18 +129,49 @@ h2 {
 
 .day-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: var(--s3);
   width: 100%;
   min-height: var(--tap);
   padding: var(--s3) 0;
-  text-align: left;
   border-bottom: 1px solid var(--rule);
 }
 
 .day-row:last-child {
   border-bottom: none;
+}
+
+.day-row-main {
+  display: block;
+  min-width: 0;
+  text-align: left;
+}
+
+/* Move-up / move-down: a personal arrangement of the list, not the primary
+   action, so these stay small rather than matching --tap like the row itself. */
+.day-row-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.day-row-reorder button {
+  min-width: 2.25rem;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-control);
+  background: var(--paper-raised);
+  color: var(--ink-45);
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.day-row-reorder button:disabled {
+  opacity: 0.3;
 }
 
 .day-row-name {

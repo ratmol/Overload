@@ -1011,6 +1011,47 @@ change only removes gating, not behavior.
 
 ---
 
+## 33. Today's day list is manually reorderable, and it is screen state, not plan state
+
+Requested directly: the plan version changed which day is listed where (v6's
+PPL order is not v3 or v5's), and after training out of the recommended order
+for a few sessions the visible list no longer matched what was actually left
+to do. Rather than trying to make the list auto-arrange around "what's left"
+— which would have to guess intent every time — the day list is now just
+manually reorderable: a ▲/▼ pair on each row, one tap moves it one position,
+repeated taps get it anywhere. No drag: HTML5 drag-and-drop does not work
+reliably on touch, and a queue of small precise taps fits this app's existing
+interaction style (skip, swap, favourite are all taps, nothing here drags)
+better than pulling in a pointer-based DnD library for four rows.
+
+**The one real decision: this is NOT `PlanMeta.templateOrder`.** That field is
+two things today — the plan's own display order AND the ROTATION order
+`nextInRotation` reads. Overloading it a third way, as a user's manual
+arrangement, would mean rearranging your own screen changes which day the
+rotation recommends next, which is a bug wearing a feature's clothes: "Next"
+is supposed to mean "what the queue says is next," not "whatever happens to
+be on top." So this is a new table, `uiPrefs` (v5 schema bump, one row,
+`templateOrder: string[]`), read only by Today's own render, and deliberately
+NOT synced (see sync-bookkeeping.ts's `SYNCED_TABLES`) — same category as
+`plan` and `templates` themselves, a per-device fact rather than training
+data. `nextInRotation` keeps reading the plan's order, unchanged; `Today`
+reads `orderedTemplateIds(baseOrder)`, which lays the saved arrangement over
+the plan order and appends anything the arrangement has not seen (a new
+install, or a day a later plan version adds) rather than hiding it.
+
+**Also confirmed while here: the gym-session timer (§30) is intact.** Nothing
+in §31/§32's session-lifecycle rework touched `gymSeconds`/`firstWorkAt`
+derivation — it still shows a live "In the gym" clock in the lift head while
+training and a full-screen total on the finish summary, both driven by
+`session.ts`'s pure functions, unaffected by when the session ROW itself gets
+created.
+
+**Reversible?** Yes — `uiPrefs` is a new, empty-by-default, unsynced table;
+deleting it loses only the arrangement, never any training data, and Today
+falls straight back to plan order.
+
+---
+
 <!--
 Template for new entries:
 

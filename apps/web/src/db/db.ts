@@ -66,6 +66,27 @@ export interface PlanMeta {
  * several cycles and the weight trend still has not responded, which is where
  * it stops adjusting and points at a blood panel instead.
  */
+/**
+ * A personal rearrangement of the day list on Today — not plan data.
+ *
+ * Kept separate from `PlanMeta.templateOrder`, which stays exactly what the
+ * plan defines and drives the rotation recommendation. This is the opposite:
+ * purely cosmetic, never read by `nextInRotation`, and never touched by a
+ * plan migration (seed.ts writes `plan`, never `uiPrefs`) — rearranging your
+ * own screen has nothing to do with which program version is loaded. Not
+ * synced either (see sync-bookkeeping.ts's SYNCED_TABLES): it is a per-device
+ * screen preference, the same category as `plan` and `templates` themselves.
+ */
+export interface UiPrefs {
+  id: 'current';
+  /**
+   * Template ids in the order to display them, front to back. An id missing
+   * from this list — never reordered yet, or a day a later plan version
+   * added — is not dropped; see `orderedTemplateIds` in ui-prefs.ts.
+   */
+  templateOrder: string[];
+}
+
 export interface TargetState {
   id: 'current';
   currentKcal: number;
@@ -96,6 +117,7 @@ export class OverloadDb extends Dexie {
   tombstones!: Table<Tombstone, string>;
   syncState!: Table<SyncState, string>;
   foods!: Table<FoodItem, string>;
+  uiPrefs!: Table<UiPrefs, string>;
   /**
    * One row per food eaten, many per day, written incrementally.
    *
@@ -169,6 +191,12 @@ export class OverloadDb extends Dexie {
       syncMeta: 'id, table, dirty, updatedAt',
       tombstones: 'id, table, dirty, deletedAt',
       syncState: 'id',
+    });
+
+    // v5 adds the Today display-order preference. Additive, one row, never
+    // synced — see UiPrefs' own comment for why this is not app data.
+    this.version(5).stores({
+      uiPrefs: 'id',
     });
   }
 }

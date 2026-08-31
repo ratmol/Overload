@@ -19,8 +19,8 @@ They ship on different schedules. Building them as one thing is the failure mode
 
 ## Current stage
 
-**Stage 3 — engine wired into the app.** Both halves are built. 312 tests
-(225 engine, 87 app). The app has the training logger, the weight trend,
+**Stage 3 — engine wired into the app.** Both halves are built. 320 tests
+(225 engine, 95 app). The app has the training logger, the weight trend,
 estimated expenditure with confidence, the target with proposals, intake import,
 the weekly volume audit, sync groundwork (schema + local tracking, no client
 yet), and food logging — a personal list plus barcode scanning against Open
@@ -119,7 +119,7 @@ values — all computed at read time. See DECISIONS.md §5.
 ```bash
 npm install
 npm run dev               # apps/web on :5173
-npm test                  # vitest, both workspaces (225 engine + 87 app)
+npm test                  # vitest, both workspaces (225 engine + 95 app)
 npm run typecheck         # tsc --noEmit, strict, both workspaces
 npm run build             # static bundle in apps/web/dist
 BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
@@ -130,8 +130,8 @@ BASE_PATH=/repo/ npm run build   # same build under a subpath (GitHub Pages)
 ```
 apps/web/src/
   db/             Dexie schema, queries, nutrition reads, foods, sync
-                  bookkeeping, JSON backup. The only place that touches
-                  IndexedDB — components never do.
+                  bookkeeping, JSON backup, Today's display-order preference.
+                  The only place that touches IndexedDB — components never do.
   features/       today, session, history, volume, body, food, data
   ui/             tokens.css, app.css
   lib/            routing, rest timer, formatting, CSV import, Open Food
